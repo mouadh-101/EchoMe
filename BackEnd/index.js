@@ -1,57 +1,70 @@
-// Load environment variables first
+// Load environment variables from .env file
 require('dotenv').config();
 
+// Import required packages and modules
 const express = require('express');
+const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const errorHandler = require('./middleware/errorHandler');
-const initializeDatabase = require('./initDb'); // Import the DB initializer
-// const { verifyToken } = require('./middleware/authMiddleware'); // Example if you have protected routes here
+const initializeDatabase = require('./config/initDb');
+const { testConnection, sequelize } = require('./config/database');
 
+// Create Express application
 const app = express();
 
-// Middleware Setup
-app.use(express.json()); // To parse JSON request bodies
+// ===== Middleware Setup =====
+// CORS configuration
+const corsOptions = {
+  origin: 'http://localhost:3000', // Frontend URL
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+};
 
-// Route Setup
-app.use('/api/auth', authRoutes); // Authentication routes (signup, login)
+app.use(cors(corsOptions));
 
-// Example of a protected route (you'll need to create actual routes that use this)
-/*
-app.get('/api/protected-resource', verifyToken, (req, res) => {
-  // This route is protected, and req.userId and req.userEmail are available
-  res.json({ message: 'This is a protected resource.', user: { id: req.userId, email: req.userEmail } });
+// This middleware parses JSON data from incoming requests
+app.use(express.json());
+
+// ===== Route Setup =====
+// Authentication routes (signup, login)
+app.use('/api/auth', authRoutes);
+
+// ===== Error Handling =====
+// Handle 404 errors - when a route is not found
+app.use((req, res) => {
+  res.status(404).json({
+    status: 'error',
+    message: `Route not found: ${req.originalUrl}`
+  });
 });
-*/
 
-// Not Found Handler (for routes that don't exist)
-// This should be placed before the main error handler
-app.use((req, res, next) => {
-  res.status(404).json({ status: 'fail', message: `Sorry, can't find ${req.originalUrl} on this server!` });
-});
-
-// Centralized Error Handling Middleware
-// This should be the last piece of middleware added
+// Global error handler - catches all errors
 app.use(errorHandler);
 
-// Define Port
-const PORT = process.env.PORT || 3000;
+// ===== Server Configuration =====
+const PORT = process.env.PORT ;
 
-// Function to start the server
+// Start the server
 async function startServer() {
   try {
-    await initializeDatabase(); // Wait for DB initialization
-    // Note: initializeDatabase now logs its own success/failure messages.
-    // If successful, it means the 'users' table is checked/created.
+    // Test database connection
+    await testConnection();
     
+    // Initialize database tables
+    await initializeDatabase();
+    
+    // Start listening for requests
+    await sequelize.sync();
+    console.log('Database connected successfully');
     app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+      console.log(`🚀 Server is running on http://localhost:${PORT}`);
     });
   } catch (error) {
-    // Error from initializeDatabase will be caught here
-    console.error('Failed to initialize database. Server not started.', error.message);
-    process.exit(1); // Exit if DB initialization fails, as it's a critical step
+    console.error('❌ Server startup failed:', error.message);
+    process.exit(1);
   }
 }
 
-// Start the server process
+// Start the server
 startServer();

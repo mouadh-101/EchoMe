@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
+const { verifyToken } = require('../middleware/authMiddleware');
 
-// Route for user signup
-// POST /api/auth/signup (assuming '/api/auth' prefix in main app)
-router.post('/signup', authController.signup);
-
-// Route for user login
-// POST /api/auth/login (assuming '/api/auth' prefix in main app)
+router.post('/register', authController.register);
 router.post('/login', authController.login);
+
+router.get('/whoami', verifyToken, authController.whoami);
+router.put('/profile', verifyToken, authController.updateProfile);
+router.put('/password', verifyToken, authController.updatePassword);
 
 module.exports = router;

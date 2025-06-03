@@ -1,31 +1,30 @@
 'use strict';
 
-const { sequelize, Sequelize } = require('../db'); // Or your path to db config
+const { sequelize, Sequelize } = require('../config/database');
 
-// Import your model definition functions manually
+// Import model definitions
 const UserModelDefinition = require('./User');
-// Example for another model:
+// Add more model imports here as needed
 // const AnotherModelDefinition = require('./AnotherModel');
 
+// Initialize models object
 const db = {};
 
-// Initialize models manually
+// Initialize models
 db.User = UserModelDefinition(sequelize, Sequelize.DataTypes);
-// Example for another model:
+// Add more model initializations here as needed
 // db.AnotherModel = AnotherModelDefinition(sequelize, Sequelize.DataTypes);
 
-// Optional: Associate models if associate method exists
-// This part can be kept if your models (like User.js) might have an 'associate' static method.
-// If not, it can be removed or commented out.
+// Set up model associations
 Object.keys(db).forEach(modelName => {
-  // Check if it's an actual Sequelize model and has an associate method
-  if (db[modelName] && db[modelName].associate) {
+  if (db[modelName] && typeof db[modelName].associate === 'function') {
     db[modelName].associate(db);
   }
 });
 
-// Export the sequelize instance and Sequelize class along with models
-db.sequelize = sequelize;
-db.Sequelize = Sequelize; // The Sequelize library itself
-
-module.exports = db;
+// Export database instance and models
+module.exports = {
+  sequelize,
+  Sequelize,
+  ...db
+};

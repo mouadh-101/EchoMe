@@ -1,95 +1,89 @@
-// No longer need bcrypt here directly for hashing, model handles it.
-// bcrypt is still used by the model's validPassword method, but not directly in controller.
-const jwt = require('jsonwebtoken');
-// Import User model and Sequelize class from models/index.js
-const { User, Sequelize } = require('../models'); 
-require('dotenv').config(); // Ensure environment variables are loaded
+require('dotenv').config();
+const authService = require('../services/authService');
 
 const authController = {
-  async signup(req, res, next) {
+  async register(req, res, next) {
     try {
       const { name, email, password } = req.body;
-
-      // Validate input (basic presence check)
       if (!name || !email || !password) {
-        return res.status(400).json({ message: 'Name, email, and password are required.' });
+        return res.status(400).json({
+          status: 'error',
+          message: 'Please provide name, email and password'
+        });
       }
 
-      // Create user with Sequelize - password hashing is handled by the model's beforeCreate hook
-      // Pass the plain password directly.
-      const newUser = await User.create({ name, email, password });
+      const result = await authService.register({ name, email, password });
 
-      // Respond with success (excluding password)
       res.status(201).json({
-        message: 'User created successfully',
-        userId: newUser.id,
-        name: newUser.name, // Include name in the response
-        email: newUser.email,
-        createdAt: newUser.createdAt,
-        updatedAt: newUser.updatedAt
+        status: 'success',
+        data: result
       });
-
     } catch (error) {
-      if (error instanceof Sequelize.UniqueConstraintError) {
-        // Extract specific message if available (e.g., from model definition)
-        const message = error.errors && error.errors[0] && error.errors[0].message 
-                        ? error.errors[0].message 
-                        : 'Email address already in use.';
-        return res.status(409).json({ message });
-      }
-      if (error instanceof Sequelize.ValidationError) {
-        // Concatenate validation error messages
-        const messages = error.errors.map(e => e.message).join(', ');
-        return res.status(400).json({ message: messages });
-      }
-      // Pass other errors (e.g., database connection issues) to the centralized error handler
       next(error);
     }
   },
 
   async login(req, res, next) {
     try {
-      const { email, password: plainPasswordFromRequest } = req.body;
+      const { email, password } = req.body;
 
-      // Validate input
-      if (!email || !plainPasswordFromRequest) {
-        return res.status(400).json({ message: 'Email and password are required.' });
+      if (!email || !password) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Please provide email and password'
+        });
       }
 
-      // Find user by email using Sequelize
-      const user = await User.findOne({ where: { email } });
-      if (!user) {
-        return res.status(401).json({ message: 'Invalid credentials (user not found).' });
-      }
+      const result = await authService.login(email, password);
 
-      // Compare passwords using the model's instance method
-      const isValidPassword = await user.validPassword(plainPasswordFromRequest);
-      if (!isValidPassword) {
-        return res.status(401).json({ message: 'Invalid credentials (password mismatch).' });
-      }
-
-      // Generate JWT
-      const jwtSecret = process.env.JWT_SECRET;
-      if (!jwtSecret) {
-        const err = new Error('JWT_SECRET is not defined. Critical server configuration issue.');
-        err.statusCode = 500;
-        console.error(err.message); 
-        return next(err);
-      }
-
-      const token = jwt.sign(
-        { userId: user.id, email: user.email }, // Payload
-        jwtSecret,
-        { expiresIn: '1h' } // Options e.g. token expires in 1 hour
-      );
-
-      res.status(200).json({ token, userId: user.id, email: user.email });
-
+      res.status(200).json({
+        status: 'success',
+        data: result
+      });
     } catch (error) {
-      // Pass other errors to the centralized error handler
       next(error);
     }
   },
+
+  async whoami(req, res, next) {
+    try {
+      const userData = await authService.whoami(req.user.id);
+
+      res.status(200).json({
+        status: 'success',
+        data: userData
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async updateProfile(req, res, next) {
+    try {
+      const user = req.user;
+      const { email, name } = req.body;
+      const userData = await authService.updateProfile(email, name,user?.id);
+      res.status(200).json({
+        status: 'success',
+        data: userData
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+  async updatePassword(req, res, next) {
+    try {
+      const user = req.user;
+      const {currentPassword, newPassword } = req.body;
+      const userData = await authService.updatePassword(user?.email, currentPassword, newPassword);
+      res.status(200).json({
+        status: 'success',
+        data: userData
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 };
 
 module.exports = authController;
