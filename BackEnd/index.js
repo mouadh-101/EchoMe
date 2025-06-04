@@ -5,6 +5,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/auth');
+const audioRoute = require('./routes/audio');
 const errorHandler = require('./middleware/errorHandler');
 const initializeDatabase = require('./config/initDb');
 const { testConnection, sequelize } = require('./config/database');
@@ -29,6 +30,8 @@ app.use(express.json());
 // ===== Route Setup =====
 // Authentication routes (signup, login)
 app.use('/api/auth', authRoutes);
+app.use('/api/audio', audioRoute);
+
 
 // ===== Error Handling =====
 // Handle 404 errors - when a route is not found
