@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const audioController = require('../controllers/audioController');
-
+const { verifyToken } = require('../middleware/authMiddleware');
 const router = express.Router();
 
 // Multer setup
@@ -14,6 +14,11 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // POST /upload
-router.post('/upload', upload.single('audio'), audioController.uploadAudio);
+router.post('/upload', upload.single('file'), audioController.uploadAudio);
+// POST /create
+router.post('/create',verifyToken, upload.single('audio'), audioController.createAudio);
+// to be deleted later 
+router.post('/transcribe', audioController.audioTranscribe);
+router.post('/tagging-title', audioController.audioTaggingTitle);
 
 module.exports = router;

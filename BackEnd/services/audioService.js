@@ -2,6 +2,14 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const cloudinary = require('../config/cloudinary');
+const { Audio } = require('../models');
+const ffmpeg = require('fluent-ffmpeg');
+const client = require('../config/assemblyAi');
+const AutomaticService = require('./AutomaticService');
+
+
+ffmpeg.setFfmpegPath('C:/Users/mouad/scoop/apps/ffmpeg/current/bin/ffmpeg.exe');
+ffmpeg.setFfprobePath('C:/Users/mouad/scoop/apps/ffmpeg/current/bin/ffprobe.exe');
 
 class AudioService {
   async uploadAudio(filePath) {
@@ -23,6 +31,86 @@ class AudioService {
       throw new Error('Upload failed: ' + error.message);
     }
   }
+  getAudioDuration(filePath) {
+    return new Promise((resolve, reject) => {
+      ffmpeg.ffprobe(filePath, (err, metadata) => {
+        if (err) return reject(err);
+        resolve(Math.floor(metadata.format.duration));
+      });
+    });
+  }
+  async createAudio(audioFile, description, userId) {
+    try {
+      const audioPath = audioFile.path;
+      const duration = await this.getAudioDuration(audioPath);
+      const uploadResult = await this.uploadAudio(audioPath);
+
+
+      const audio = await Audio.create({
+        user_id: userId,
+        file_url: uploadResult.data,
+        description,
+        duration,
+        status: 'pending',
+      });
+
+      return {
+        status: 'success',
+        data: {
+          id: audio.id,
+          url: uploadResult.url,
+          description,
+          duration,
+          userId,
+        },
+      };
+    } catch (error) {
+      throw new Error('Audio creation failed: ' + error.message);
+    }
+
+  }
+  async audioTranscript(audioPath) {  
+    const params = {
+      audio: audioPath,
+      speech_model: "universal",
+    };
+    try {
+      const transcript = await client.transcripts.transcribe(params);
+      
+      // Poll for completion
+      let completedTranscript;
+      do {
+        await new Promise(r => setTimeout(r, 3000));
+        completedTranscript = await client.transcripts.get(transcript.id);
+      } while (
+        completedTranscript.status !== "completed" &&
+        completedTranscript.status !== "error"
+      );
+
+      if (completedTranscript.status === "error") {
+        throw new Error("Transcription failed: " + completedTranscript.error);
+      }
+
+      return {
+        status: 'success',
+        text: completedTranscript.text
+      };
+    } catch (error) {
+      throw new Error('Transcription failed: ' + error.message);
+    }
+  }
+  async autoTaging(transcription) {
+    try {
+      const result = await AutomaticService.generateTagsTitle(transcription);
+      return {
+        status: 'success',
+        data: result,
+      };
+    } catch (error) {
+      throw new Error('Tagging failed: ' + error.message);
+    }
+  }
+
 }
 
 module.exports = new AudioService();

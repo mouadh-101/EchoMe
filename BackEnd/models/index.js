@@ -4,16 +4,24 @@ const { sequelize, Sequelize } = require('../config/database');
 
 // Import model definitions
 const UserModelDefinition = require('./User');
-// Add more model imports here as needed
-// const AnotherModelDefinition = require('./AnotherModel');
+const AudioModelDefinition = require('./audio');
+const TagModelDefinition = require('./tag');
+const SummaryModelDefinition = require('./summary');
+const TranscriptionModelDefinition = require('./Transcription');
+
+
 
 // Initialize models object
 const db = {};
 
 // Initialize models
 db.User = UserModelDefinition(sequelize, Sequelize.DataTypes);
-// Add more model initializations here as needed
-// db.AnotherModel = AnotherModelDefinition(sequelize, Sequelize.DataTypes);
+db.Audio=AudioModelDefinition(sequelize, Sequelize.DataTypes);
+db.Tag = TagModelDefinition(sequelize, Sequelize.DataTypes);
+db.Summary = SummaryModelDefinition(sequelize, Sequelize.DataTypes);
+db.Transcription = TranscriptionModelDefinition(sequelize, Sequelize.DataTypes);
+
+
 
 // Set up model associations
 Object.keys(db).forEach(modelName => {
@@ -21,6 +29,7 @@ Object.keys(db).forEach(modelName => {
     db[modelName].associate(db);
   }
 });
+
 
 // Export database instance and models
 module.exports = {

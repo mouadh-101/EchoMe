@@ -64,6 +64,13 @@ module.exports = (sequelize, DataTypes) => {
       }
     ]
   });
+  // ===== Model Associations =====
+  User.associate = (models) => {
+    User.hasMany(models.Audio, {
+      foreignKey: 'user_id',
+      as: 'audios',
+    });
+  };
 
   // ===== Model Hooks =====
   
