@@ -128,7 +128,6 @@ class AudioService {
         }
   
         const transcriptText = transcriptResult.text;
-  
         // Step 2: Generate tags, title, mood
         const taggingResult = await this.autoTagging(transcriptText);
         if (taggingResult.status === 'error') {
@@ -136,9 +135,7 @@ class AudioService {
           await audio.update({ status: 'error' });
           continue;
         }
-  
         const { title, tags, mood } = taggingResult.data;
-  
         // Step 3: Upsert tags and transactionally update audio + transcription
         const tagInstances = await Promise.all(
           tags.map(tagName => Tag.findOrCreate({ where: { name: tagName } }).then(([tag]) => tag))
