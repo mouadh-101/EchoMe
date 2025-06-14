@@ -58,13 +58,22 @@ class AudioController {
   async audioTaggingTitle(req, res) {
     try{
     const {transcription} = req.body;
-    const result = await audioService.autoTaging(transcription);
+    const result = await audioService.autoTagging(transcription);
     res.json(result);
 
     }
     catch (error) {
       console.error('Tagging error:', error);
       res.status(500).json({ error: error.message || 'Tagging failed' });
+    }
+  }
+  async processPendingAudios(req, res) {
+    try {
+      const result = await audioService.processPendingAudios();
+      res.json(result);
+    } catch (error) {
+      console.error('Process pending audios error:', error);
+      res.status(500).json({ error: error.message || 'Processing pending audios failed' });
     }
   }
 }

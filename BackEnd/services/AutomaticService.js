@@ -13,40 +13,42 @@ class AutomaticService {
 
     async queryMistral(prompt, temperature = 0.7, max_tokens = 256) {
         const payload = {
-            inputs: `<s>[INST] ${prompt} [/INST]`,
+            inputs: `${prompt}`,
             parameters: {
                 temperature,
                 max_new_tokens: max_tokens
             }
         };
-
+    
         const res = await fetch(this.baseUrl, {
             method: 'POST',
             headers: this.headers,
             body: JSON.stringify(payload)
         });
-
+    
         const text = await res.text();
-
+    
         try {
             const data = JSON.parse(text);
             if (Array.isArray(data) && data[0]?.generated_text) {
-                return data[0].generated_text.trim();
+                return data[0].generated_text.trim(); // just the raw output
             }
             throw new Error("Unexpected output format");
         } catch (err) {
-            console.error("Invalid JSON response:", text);
+            console.error("Invalid JSON response from Hugging Face:", text);
             throw new Error("Invalid JSON response from Hugging Face.");
         }
     }
+    
 
     async generateTagsTitle(transcription) {
         const prompt = `
-    Based on the following transcription, generate a short, catchy **title** and 3-5 relevant **tags**.
+    Based on the following transcription, generate a short, catchy **title** and 3-5 relevant **tags**,and descriobe the mood of audio.
     Return in JSON and only JSON format like:
     {
       "title": "Your Title Here",
-      "tags": ["tag1", "tag2", "tag3"]
+      "tags": ["tag1", "tag2", "tag3"],
+      "mood": "happy" // or "sad", "exciting", etc.
     }
     
     Transcription:
@@ -56,18 +58,17 @@ class AutomaticService {
         const output = await this.queryMistral(prompt);
     
         try {
-            const match = output.match(/{[\s\S]+}/);
-            if (!match) throw new Error("No JSON found in model output.");
+            const matches = [...output.matchAll(/{[\s\S]+?}/g)];
+            const lastMatch = matches[matches.length - 1];
     
-            const json = JSON.parse(match[0]);
-            if (!json.title || !Array.isArray(json.tags)) {
-                throw new Error("Missing title or tags.");
+            if (!lastMatch) throw new Error("No JSON found in model output.");
+    
+            const json = JSON.parse(lastMatch[0]);
+            if (!json.title || !Array.isArray(json.tags) || !json.mood) {
+                throw new Error("Missing title, mood or tags.");
             }
     
-            return {
-                status: "success",
-                data: json
-            };
+            return json; // ✅ Only return the pure data
         } catch (err) {
             console.error("JSON parsing failed. Full output:", output);
             return {
@@ -77,8 +78,9 @@ class AutomaticService {
             };
         }
     }
-    //  json problems will be fixed later 
     
+    
+        
 
 }
 

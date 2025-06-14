@@ -2,7 +2,7 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const cloudinary = require('../config/cloudinary');
-const { Audio } = require('../models');
+const { Audio, Tag, Transcription, sequelize } = require('../models');
 const ffmpeg = require('fluent-ffmpeg');
 const client = require('../config/assemblyAi');
 const AutomaticService = require('./AutomaticService');
@@ -58,7 +58,7 @@ class AudioService {
         status: 'success',
         data: {
           id: audio.id,
-          url: uploadResult.url,
+          url: uploadResult.data,
           description,
           duration,
           userId,
@@ -99,7 +99,7 @@ class AudioService {
       throw new Error('Transcription failed: ' + error.message);
     }
   }
-  async autoTaging(transcription) {
+  async autoTagging(transcription) {
     try {
       const result = await AutomaticService.generateTagsTitle(transcription);
       return {
@@ -110,6 +110,60 @@ class AudioService {
       throw new Error('Tagging failed: ' + error.message);
     }
   }
+  async processPendingAudios() {
+    const audios = await Audio.findAll({
+      where: { status: 'pending' },
+      include: [{ model: Transcription, as: 'transcription' }],
+    });
+  
+    for (const audio of audios) {
+      try {
+        // Step 1: Generate transcription
+        const transcriptResult = await this.audioTranscript(audio.file_url);
+  
+        if (!transcriptResult || transcriptResult.status !== 'success' || !transcriptResult.text) {
+          console.warn(`No transcription generated for audio ${audio.id}`);
+          await audio.update({ status: 'error' });
+          continue;
+        }
+  
+        const transcriptText = transcriptResult.text;
+  
+        // Step 2: Generate tags, title, mood
+        const taggingResult = await this.autoTagging(transcriptText);
+        if (taggingResult.status === 'error') {
+          console.warn(`Tagging failed for audio ${audio.id}`, taggingResult.message);
+          await audio.update({ status: 'error' });
+          continue;
+        }
+  
+        const { title, tags, mood } = taggingResult.data;
+  
+        // Step 3: Upsert tags and transactionally update audio + transcription
+        const tagInstances = await Promise.all(
+          tags.map(tagName => Tag.findOrCreate({ where: { name: tagName } }).then(([tag]) => tag))
+        );
+  
+        await sequelize.transaction(async (t) => {
+          if (audio.transcription) {
+            await audio.transcription.update({ text: transcriptText }, { transaction: t });
+          } else {
+            await Transcription.create({ audio_id: audio.id, text: transcriptText }, { transaction: t });
+          }
+  
+          await audio.update({ title, mood, status: 'ready' }, { transaction: t });
+          await audio.setTags(tagInstances, { transaction: t });
+        });
+  
+        console.log(`Processed audio ${audio.id} successfully.`);
+  
+      } catch (err) {
+        console.error(`Error processing audio ${audio.id}:`, err.message);
+        await audio.update({ status: 'error' });
+      }
+    }
+  }
+  
 
 }
 

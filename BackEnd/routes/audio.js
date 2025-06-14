@@ -20,5 +20,6 @@ router.post('/create',verifyToken, upload.single('audio'), audioController.creat
 // to be deleted later 
 router.post('/transcribe', audioController.audioTranscribe);
 router.post('/tagging-title', audioController.audioTaggingTitle);
+router.put('/process',audioController.processPendingAudios);
 
 module.exports = router;
