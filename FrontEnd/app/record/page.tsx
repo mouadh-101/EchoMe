@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { HorizontalWaveform } from "@/components/audio/horizontal-waveform"
 import { Mic, Square, Keyboard } from "lucide-react"
+import MicRecorder from "mic-recorder-to-mp3"
+
+const Mp3Recorder = new MicRecorder({ bitRate: 128 })
 
 export default function RecordPage() {
   const router = useRouter()
@@ -25,7 +28,6 @@ export default function RecordPage() {
     }
   }, [isRecording])
 
-  // Keyboard shortcut for recording
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.code === "Space" && (e.ctrlKey || e.metaKey)) {
@@ -46,21 +48,49 @@ export default function RecordPage() {
 
   const toggleRecording = () => {
     if (!isRecording) {
-      setRecordingTime(0)
-      setIsRecording(true)
+      startRecording()
     } else {
-      setIsRecording(false)
-      // Navigate to review page after stopping recording
-      setTimeout(() => {
-        router.push("/review")
-      }, 500)
+      stopRecording()
     }
+  }
+
+  const startRecording = async () => {
+    try {
+      await Mp3Recorder.start()
+      setIsRecording(true)
+      setRecordingTime(0)
+    } catch (err) {
+      console.error("Microphone access denied or failed", err)
+    }
+  }
+
+  const stopRecording = () => {
+    Mp3Recorder.stop()
+      .getMp3()
+      .then(([buffer, blob]) => {
+        const audioUrl = URL.createObjectURL(blob)
+        sessionStorage.setItem("audioUrl", audioUrl)
+
+        // Optional: encode to base64 to send to backend
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          const base64Audio = reader.result as string
+          sessionStorage.setItem("audioBase64", base64Audio)
+          router.push("/review")
+        }
+        reader.readAsDataURL(blob)
+
+        setIsRecording(false)
+      })
+      .catch((err) => {
+        console.error("Recording failed", err)
+        setIsRecording(false)
+      })
   }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6">
       <div className="w-full max-w-2xl mx-auto">
-        {/* Title and time */}
         <div className="text-center mb-8">
           <h1 className="font-serif text-3xl lg:text-4xl font-bold mb-4">
             {isRecording ? "Listening..." : "Ready to Record"}
@@ -73,20 +103,17 @@ export default function RecordPage() {
           </p>
         </div>
 
-        {/* Horizontal waveform at the top */}
         <div className="w-full mb-12">
           <HorizontalWaveform isActive={isRecording} height={120} />
         </div>
 
-        {/* Record button */}
         <div className="flex justify-center mb-12">
           <Button
             onClick={toggleRecording}
-            className={`w-24 h-24 lg:w-32 lg:h-32 rounded-full flex items-center justify-center transition-all duration-300 ${
-              isRecording
+            className={`w-24 h-24 lg:w-32 lg:h-32 rounded-full flex items-center justify-center transition-all duration-300 ${isRecording
                 ? "bg-[#FF4E4E] hover:bg-[#FF4E4E]/90 shadow-[0_0_40px_rgba(255,78,78,0.6)]"
                 : "bg-[#1FB2A6] hover:bg-[#1FB2A6]/90 shadow-[0_0_40px_rgba(31,178,166,0.6)]"
-            } hover:scale-105`}
+              } hover:scale-105`}
           >
             {isRecording ? (
               <Square className="h-12 w-12 lg:h-16 lg:w-16 text-[#0E0E0E]" />
@@ -96,7 +123,6 @@ export default function RecordPage() {
           </Button>
         </div>
 
-        {/* Keyboard shortcut info */}
         {!isRecording && (
           <div className="text-center">
             <div className="flex items-center justify-center gap-2 text-sm text-[#F4EBDC]/70">

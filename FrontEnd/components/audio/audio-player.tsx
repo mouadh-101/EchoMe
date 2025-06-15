@@ -11,7 +11,7 @@ interface AudioPlayerProps {
   compact?: boolean
 }
 
-export function AudioPlayer({ src = "/demo-audio.mp3", title, compact = false }: AudioPlayerProps) {
+export function AudioPlayer({ src, title, compact = false }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)

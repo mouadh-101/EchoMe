@@ -21,6 +21,8 @@ router.post('/create',verifyToken, upload.single('audio'), audioController.creat
 router.get('/',verifyToken, audioController.fetchAudioByUser);
 // GET /stats
 router.get('/stats', verifyToken, audioController.fetchStatestics);
+// GET /audById/:id
+router.get('/audById/:id', verifyToken, audioController.fetchAudioById);
 // to be deleted later 
 router.post('/transcribe', audioController.audioTranscribe);
 router.post('/tagging-title', audioController.audioTaggingTitle);

@@ -122,30 +122,6 @@ export default function Dashboard() {
           >
             All
           </Badge>
-          <Badge
-            variant="outline"
-            className="bg-transparent hover:bg-[#1A1A1A]/80 text-[#F4EBDC]/70 border-[#333333] rounded-full px-4 py-2 cursor-pointer whitespace-nowrap"
-          >
-            Ideas
-          </Badge>
-          <Badge
-            variant="outline"
-            className="bg-transparent hover:bg-[#1A1A1A]/80 text-[#F4EBDC]/70 border-[#333333] rounded-full px-4 py-2 cursor-pointer whitespace-nowrap"
-          >
-            Meetings
-          </Badge>
-          <Badge
-            variant="outline"
-            className="bg-transparent hover:bg-[#1A1A1A]/80 text-[#F4EBDC]/70 border-[#333333] rounded-full px-4 py-2 cursor-pointer whitespace-nowrap"
-          >
-            Tasks
-          </Badge>
-          <Badge
-            variant="outline"
-            className="bg-transparent hover:bg-[#1A1A1A]/80 text-[#F4EBDC]/70 border-[#333333] rounded-full px-4 py-2 cursor-pointer whitespace-nowrap"
-          >
-            Personal
-          </Badge>
         </div>
       </div>
 
@@ -154,7 +130,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {audio.map((audio) => (
           <EchoCard
-            key={audio.id}
+            id={audio.id}
             title={
               audio.title
                 ? audio.title.split(' ').slice(0, 5).join(' ') + (audio.title.split(' ').length > 5 ? '...' : '')
@@ -169,7 +145,6 @@ export default function Dashboard() {
             }
             timestamp={formatDistanceToNow(new Date(audio.created_at), { addSuffix: true })}
             tags={audio.tags.map((tag) => tag.name)}
-            isPinned={false}
           />
         ))}
       </div>

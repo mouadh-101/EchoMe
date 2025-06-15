@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -8,61 +8,98 @@ import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { AudioPlayer } from "@/components/audio/audio-player"
 import { MapPin, Smile, Tag, Check, X } from "lucide-react"
+import { audioService } from "@/app/services/audioService"
+import { EchoAlert } from "@/components/ui/echo-alert"
 
 export default function ReviewPage() {
   const router = useRouter()
   const [description, setDescription] = useState("")
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [showAlert, setShowAlert] = useState<{
+    show: boolean
+    type: "success" | "error" | "info" | "warning"
+    message: string
+    subMessage?: string
+  }>({ show: false, type: "success", message: "" })
 
-  // Auto-generated tags, location, and mood (would come from AI in a real app)
-  const autoTags = ["Work", "Meeting", "Project"]
-  const location = "Office"
-  const mood = "Focused"
-
-  const handleSubmit = () => {
-    // In a real app, would save the recording and metadata
-    router.push("/summary")
+  const showAlertMessage = (type: "success" | "error" | "info" | "warning", message: string, subMessage?: string) => {
+    setShowAlert({ show: true, type, message, subMessage })
+    setTimeout(() => {
+      setShowAlert({ show: false, type: "success", message: "" })
+    }, 3000)
   }
 
+  useEffect(() => {
+    const storedUrl = sessionStorage.getItem("audioUrl")
+    if (storedUrl) {
+      setAudioUrl(storedUrl)
+    }
+  }, [])
+
+  const handleSubmit = async () => {
+    const audio = sessionStorage.getItem("audioBase64")
+  
+    if (!audio) {
+      alert("Audio data is missing.")
+      return
+    }
+  
+    // Convert base64 to Blob
+    const byteString = atob(audio.split(",")[1])
+    const mimeString = audio.split(",")[0].split(":")[1].split(";")[0]
+    const ab = new ArrayBuffer(byteString.length)
+    const ia = new Uint8Array(ab)
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i)
+    }
+    const audioBlob = new Blob([ab], { type: mimeString })
+  
+    // Send to backend via FormData
+    const formData = new FormData()
+    formData.append("audio", audioBlob, "recording.wav")
+    formData.append("description", description)
+  
+    try {
+      const result=await audioService.create(formData)
+      sessionStorage.removeItem("audioUrl")
+      sessionStorage.removeItem("audioBase64")
+      if( result.status == "success") {
+        showAlertMessage("success", "Audio File added seccesfully", "Your echo has been saved successfully!") 
+      }
+      router.push("/dashboard")
+    } catch (err) {
+      showAlertMessage("error", "Upload failed", "There was an error uploading your audio. Please try again.")
+      console.error("Upload failed", err)
+    }
+  }
+  
+
   const handleCancel = () => {
-    // In a real app, would delete the recording
+    sessionStorage.removeItem("audioUrl")
+    setAudioUrl(null)
     router.push("/dashboard")
   }
 
   return (
     <div className="container max-w-3xl mx-auto px-4 py-8">
+      {showAlert.show && (
+            <EchoAlert
+              type={showAlert.type}
+              message={showAlert.message}
+              subMessage={showAlert.subMessage}
+              dismissible={true}
+              onDismiss={() => setShowAlert({ show: false, type: "success", message: "" })}
+            />
+          )}
       <h1 className="font-serif text-3xl font-bold mb-6">Review Your Echo</h1>
 
       <Card className="bg-[#1A1A1A] border-[#333333] rounded-2xl shadow-lg mb-6">
         <CardContent className="p-6">
           <h2 className="text-xl font-medium mb-4">Listen to your recording</h2>
 
-          <AudioPlayer title="Voice Note - Just Now" />
+          {audioUrl && <AudioPlayer src={audioUrl} title="Voice Note - Just Now" />}
 
           <div className="mt-6 space-y-4">
-            <div>
-              <h3 className="text-sm font-medium text-[#F4EBDC]/70 mb-2">Auto-detected Tags</h3>
-              <div className="flex flex-wrap gap-2">
-                {autoTags.map((tag) => (
-                  <Badge key={tag} className="bg-[#1FB2A6]/20 text-[#1FB2A6] rounded-full px-3 py-1">
-                    <Tag className="h-3 w-3 mr-1" />
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center">
-                <MapPin className="h-4 w-4 text-[#F4EBDC]/70 mr-2" />
-                <span className="text-sm text-[#F4EBDC]/70">{location}</span>
-              </div>
-
-              <div className="flex items-center">
-                <Smile className="h-4 w-4 text-[#F4EBDC]/70 mr-2" />
-                <span className="text-sm text-[#F4EBDC]/70">{mood}</span>
-              </div>
-            </div>
-
             <div>
               <h3 className="text-sm font-medium text-[#F4EBDC]/70 mb-2">Add a description (optional)</h3>
               <Textarea

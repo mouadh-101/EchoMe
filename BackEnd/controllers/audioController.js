@@ -98,6 +98,18 @@ class AudioController {
       res.status(500).json({ error: error.message || 'Fetching statistics failed' });
     }
   }
+  async fetchAudioById(req, res) {
+    try{
+      const userId = req.user.id;
+      const audioId = req.params.id;
+      const result = await audioService.fetchAudioById(userId, audioId);
+      res.json(result);
+    }
+    catch (error) {
+      console.error('Fetch audio by ID error:', error);
+      res.status(500).json({ error: error.message || 'Fetching audio by ID failed' });
+    }
+  }
 }
 
 module.exports = new AudioController(); 

@@ -5,27 +5,26 @@ import { Button } from "@/components/ui/button"
 import { Brain, Pin, Clock, Trash, Play } from "lucide-react"
 
 interface EchoCardProps {
+  id: number
   title: string
   preview: string
   timestamp: string
   tags: string[]
-  isPinned: boolean
 }
 
-export function EchoCard({ title, preview, timestamp, tags, isPinned }: EchoCardProps) {
+export function EchoCard({ id, title, preview, timestamp, tags, }: EchoCardProps) {
   return (
     <Card className="bg-[#1A1A1A] border-[#333333] hover:border-[#1FB2A6]/50 rounded-2xl shadow-lg transition-all duration-300 hover:shadow-[0_0_15px_rgba(31,178,166,0.2)] group">
       <CardContent className="p-6">
         <div className="flex justify-between items-start mb-3">
-          <Link href="/summary" className="flex-1">
+          <Link href={`/summary/${id}`} className="flex-1">
             <h3 className="font-medium text-lg lg:text-xl hover:text-[#1FB2A6] transition-colors cursor-pointer">
               {title}
             </h3>
           </Link>
-          {isPinned && <Pin className="h-5 w-5 text-[#1FB2A6] ml-2" />}
         </div>
 
-        <Link href="/summary">
+        <Link href={`/summary/${id}`}>
           <p className="text-[#F4EBDC]/70 text-sm lg:text-base mb-4 line-clamp-3 hover:text-[#F4EBDC]/90 transition-colors cursor-pointer">
             {preview}
           </p>
@@ -49,15 +48,6 @@ export function EchoCard({ title, preview, timestamp, tags, isPinned }: EchoCard
           </div>
 
           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-[#0E0E0E] hover:text-[#1FB2A6]">
-              <Play className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-[#0E0E0E] hover:text-[#1FB2A6]">
-              <Brain className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-[#0E0E0E] hover:text-[#1FB2A6]">
-              <Pin className="h-4 w-4" />
-            </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-[#0E0E0E] hover:text-[#FF4E4E]">
               <Trash className="h-4 w-4" />
             </Button>

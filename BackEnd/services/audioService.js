@@ -2,7 +2,7 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const cloudinary = require('../config/cloudinary');
-const { Audio, Tag, Transcription, sequelize } = require('../models');
+const { Audio, Tag, Transcription,Summary, sequelize } = require('../models');
 const ffmpeg = require('fluent-ffmpeg');
 const client = require('../config/assemblyAi');
 const AutomaticService = require('./AutomaticService');
@@ -113,7 +113,14 @@ class AudioService {
   async processPendingAudios() {
     const audios = await Audio.findAll({
       where: { status: 'pending' },
-      include: [{ model: Transcription, as: 'transcription' }],
+      include: [
+        {
+          model: Transcription, as: 'transcription'
+        },
+        {
+          model: Summary, as: 'summary',
+        }
+      ],
     });
 
     for (const audio of audios) {
@@ -135,11 +142,21 @@ class AudioService {
           await audio.update({ status: 'error' });
           continue;
         }
-        const { title, tags, mood } = taggingResult.data;
-        // Step 3: Upsert tags and transactionally update audio + transcription
+        const { title, tags, mood,summary } = taggingResult.data;
+        // Step 3: Upsert tags summary and transactionally update audio + transcription
         const tagInstances = await Promise.all(
           tags.map(tagName => Tag.findOrCreate({ where: { name: tagName } }).then(([tag]) => tag))
         );
+        
+        const summaryInstance = await Summary.findOrCreate({
+          where:{ audio_id: audio.id },
+          defaults: { summary_text: summary }
+        }).then(([summary]) => summary);
+        if (!summaryInstance) {
+          console.warn(`Failed to create summary for audio ${audio.id}`);
+          await audio.update({ status: 'error' });
+          continue;
+        }
 
         await sequelize.transaction(async (t) => {
           if (audio.transcription) {
@@ -164,10 +181,10 @@ class AudioService {
     try {
       const audios = await Audio.findAll({
         where: { user_id: userId },
-        attributes:['id','description', 'title', 'created_at'],
+        attributes: ['id', 'description', 'title', 'created_at'],
         include: [
           {
-             model: Tag, as: 'tags',
+            model: Tag, as: 'tags',
             attributes: ['id', 'name'],
             through: {
               attributes: [],
@@ -255,6 +272,41 @@ class AudioService {
     catch (error) {
       console.error('Fetch statistics error:', error);
       throw new Error('Fetch statistics failed: ' + error.message);
+    }
+  }
+  async fetchAudioById(userId, audioId) {
+    try {
+      const audio = await Audio.findOne({
+        where: { id: audioId, user_id: userId },
+        include: [
+          {
+            model: Tag, as: 'tags',
+            attributes: ['id', 'name'],
+            through: {
+              attributes: [],
+            }
+          },
+          {
+            model: Transcription, as: 'transcription',
+            attributes: ['text']
+          },
+          {
+            model: Summary, as: 'summary',
+            attributes: ['summary_text']
+          }
+        ],
+      });
+
+      if (!audio) {
+        return { status: 'error', message: 'Audio not found' };
+      }
+
+      return {
+        status: 'success',
+        data: audio,
+      };
+    } catch (error) {
+      throw new Error('Fetch audio failed: ' + error.message);
     }
   }
 }

@@ -1,19 +1,58 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AudioPlayer } from "@/components/audio/audio-player"
 import { Clock, MapPin, Smile, CheckSquare, Tag, Calendar, BookOpen } from "lucide-react"
+import { userAudioData } from "@/app/services/audioService"
+import { audioService } from "@/app/services/audioService"
 
 export default function SummaryPage() {
+  const [audioData, setAudioData] = useState<userAudioData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const formatDurationToHHMMSS = (seconds: any) => {
+    if (!seconds || seconds < 0) return '0:00';
+
+    const minutes = Math.floor(seconds / 60);
+    if (minutes > 59) {
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      const remainingSeconds = seconds % 60;
+      return `${hours}:${remainingMinutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  // Fetch audio data by ID (this would typically be done in a useEffect)
+  const fetchAudioData = async (id: number) => {
+    try {
+      const response = await audioService.fetchAudioById(id)
+      if (response.status === "success") {
+        setAudioData(response.data)
+      } else {
+        console.error("Failed to fetch audio data:", response.message)
+      }
+    } catch (error) {
+      console.error("Error fetching audio data:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+  useEffect(() => {
+    const audioId = Number(window.location.pathname.split('/').pop())
+    fetchAudioData(audioId)
+  }
+    , [])
+
   const [showFullTranscript, setShowFullTranscript] = useState(false)
 
-  const fullTranscript = `I was thinking about the new project we're starting next week. We need to make sure we have all the resources lined up. First, we should check with the design team to see if they've finalized the mockups. Then, we need to set up the development environment and make sure everyone has access. I'm a bit concerned about the timeline - we only have three weeks to complete the first phase. Maybe we should schedule a kickoff meeting on Monday to go over the details and assign tasks. Also, don't forget to follow up with marketing about the launch plan.`
+  const fullTranscript = audioData?.transcription?.text || "No summary available."
 
-  const shortTranscript = fullTranscript.substring(0, 150) + "..."
+  const shortTranscript = fullTranscript?.substring(0, 150) + "..."
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
@@ -24,28 +63,39 @@ export default function SummaryPage() {
         <div className="space-y-6">
           <Card className="bg-[#1A1A1A] border-[#333333] rounded-2xl shadow-lg">
             <CardContent className="p-6">
-              <h2 className="text-xl font-medium mb-4">Project Planning</h2>
+              <h2 className="text-xl font-medium mb-4">{audioData?.title}</h2>
 
               <div className="flex items-center gap-2 text-sm text-[#F4EBDC]/70 mb-4">
                 <Clock className="h-4 w-4" />
-                <span>Today, 10:23 AM</span>
+                <span>
+                  {audioData?.created_at
+                    ? new Date(audioData.created_at).toLocaleDateString()
+                    : 'Unknown date'}
+                </span>
                 <span>•</span>
-                <span>1:45</span>
+                <span>{formatDurationToHHMMSS(audioData?.duration)}</span>
               </div>
 
-              <AudioPlayer />
+              <AudioPlayer
+                src={audioData?.file_url}
+                title={audioData?.title}
+                compact={false}
+               />
 
               <div className="flex items-center gap-2 mt-6 mb-4">
-                <MapPin className="h-4 w-4 text-[#F4EBDC]/70" />
-                <span className="text-sm text-[#F4EBDC]/70">Office</span>
                 <Smile className="h-4 w-4 text-[#F4EBDC]/70 ml-2" />
-                <span className="text-sm text-[#F4EBDC]/70">Focused</span>
+                <span className="text-sm text-[#F4EBDC]/70">{audioData?.mood}</span>
               </div>
 
               <div className="flex flex-wrap gap-2 mb-6">
-                <Badge className="bg-[#1FB2A6]/20 text-[#1FB2A6] hover:bg-[#1FB2A6]/30 rounded-full">Work</Badge>
-                <Badge className="bg-[#1FB2A6]/20 text-[#1FB2A6] hover:bg-[#1FB2A6]/30 rounded-full">Project</Badge>
-                <Badge className="bg-[#1FB2A6]/20 text-[#1FB2A6] hover:bg-[#1FB2A6]/30 rounded-full">Planning</Badge>
+                {audioData?.tags.map((tag, index) => (
+                  <Badge
+                    key={index}
+                    className="bg-[#1FB2A6]/20 text-[#1FB2A6] hover:bg-[#1FB2A6]/30 rounded-full px-3 py-1 text-sm"
+                  >
+                    {tag.name}
+                  </Badge>
+                ))}
               </div>
 
               <h3 className="font-medium text-lg mb-2">Transcript</h3>
@@ -67,19 +117,8 @@ export default function SummaryPage() {
             <CardContent className="p-6">
               <h2 className="text-xl font-medium mb-4">AI Summary</h2>
               <p className="text-[#F4EBDC]/90 mb-6">
-                Planning for next week's new project. Need to check with design team for mockups, set up development
-                environment, and ensure team access. Concerned about the three-week timeline for phase one. Suggested
-                Monday kickoff meeting to assign tasks. Remember to follow up with marketing about launch.
+                {audioData?.summary?.summary_text || "No summary available."}
               </p>
-
-              <h3 className="font-medium text-lg mb-4">Key Points</h3>
-              <ul className="list-disc list-inside space-y-2 text-[#F4EBDC]/90 mb-6">
-                <li>Check with design team about mockups</li>
-                <li>Set up development environment</li>
-                <li>Schedule kickoff meeting on Monday</li>
-                <li>Follow up with marketing team</li>
-                <li>Timeline concern: 3 weeks for phase one</li>
-              </ul>
             </CardContent>
           </Card>
 
