@@ -1,4 +1,5 @@
 import { setToken , getToken } from '../utils/auth';
+import { BackendResponse } from '../utils/backEndRespons';
 
 interface AuthFormData {
   name?: string;
@@ -6,11 +7,7 @@ interface AuthFormData {
   password: string;
 }
 
-interface BackendResponse<T> {
-  status: 'success' | 'error';
-  data: T;
-  message?: string;
-}
+
 
 interface UserData {
   id: number;

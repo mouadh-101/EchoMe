@@ -17,6 +17,10 @@ const upload = multer({ storage });
 router.post('/upload', upload.single('file'), audioController.uploadAudio);
 // POST /create
 router.post('/create',verifyToken, upload.single('audio'), audioController.createAudio);
+// GET /
+router.get('/',verifyToken, audioController.fetchAudioByUser);
+// GET /stats
+router.get('/stats', verifyToken, audioController.fetchStatestics);
 // to be deleted later 
 router.post('/transcribe', audioController.audioTranscribe);
 router.post('/tagging-title', audioController.audioTaggingTitle);

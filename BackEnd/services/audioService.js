@@ -6,7 +6,7 @@ const { Audio, Tag, Transcription, sequelize } = require('../models');
 const ffmpeg = require('fluent-ffmpeg');
 const client = require('../config/assemblyAi');
 const AutomaticService = require('./AutomaticService');
-
+const { Op, fn, col } = require('sequelize');
 
 ffmpeg.setFfmpegPath('C:/Users/mouad/scoop/apps/ffmpeg/current/bin/ffmpeg.exe');
 ffmpeg.setFfprobePath('C:/Users/mouad/scoop/apps/ffmpeg/current/bin/ffprobe.exe');
@@ -69,14 +69,14 @@ class AudioService {
     }
 
   }
-  async audioTranscript(audioPath) {  
+  async audioTranscript(audioPath) {
     const params = {
       audio: audioPath,
       speech_model: "universal",
     };
     try {
       const transcript = await client.transcripts.transcribe(params);
-      
+
       // Poll for completion
       let completedTranscript;
       do {
@@ -115,18 +115,18 @@ class AudioService {
       where: { status: 'pending' },
       include: [{ model: Transcription, as: 'transcription' }],
     });
-  
+
     for (const audio of audios) {
       try {
         // Step 1: Generate transcription
         const transcriptResult = await this.audioTranscript(audio.file_url);
-  
+
         if (!transcriptResult || transcriptResult.status !== 'success' || !transcriptResult.text) {
           console.warn(`No transcription generated for audio ${audio.id}`);
           await audio.update({ status: 'error' });
           continue;
         }
-  
+
         const transcriptText = transcriptResult.text;
         // Step 2: Generate tags, title, mood
         const taggingResult = await this.autoTagging(transcriptText);
@@ -140,28 +140,123 @@ class AudioService {
         const tagInstances = await Promise.all(
           tags.map(tagName => Tag.findOrCreate({ where: { name: tagName } }).then(([tag]) => tag))
         );
-  
+
         await sequelize.transaction(async (t) => {
           if (audio.transcription) {
             await audio.transcription.update({ text: transcriptText }, { transaction: t });
           } else {
             await Transcription.create({ audio_id: audio.id, text: transcriptText }, { transaction: t });
           }
-  
+
           await audio.update({ title, mood, status: 'ready' }, { transaction: t });
           await audio.setTags(tagInstances, { transaction: t });
         });
-  
+
         console.log(`Processed audio ${audio.id} successfully.`);
-  
+
       } catch (err) {
         console.error(`Error processing audio ${audio.id}:`, err.message);
         await audio.update({ status: 'error' });
       }
     }
   }
-  
+  async fetchAudioByUser(userId) {
+    try {
+      const audios = await Audio.findAll({
+        where: { user_id: userId },
+        attributes:['id','description', 'title', 'created_at'],
+        include: [
+          {
+             model: Tag, as: 'tags',
+            attributes: ['id', 'name'],
+            through: {
+              attributes: [],
+            }
+          }
+        ],
+      });
+      return {
+        status: 'success',
+        data: audios,
+      };
+    }
+    catch (error) {
+      throw new Error('Fetch audio failed: ' + error.message);
+    }
+  }
+  async fetchStatestics(userId) {
+    try {
+      const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+      console.log('Fetching statistics for user:', userId);
+      console.log('Today:', today);
 
+      let audioToday, audioTotal, audioPending, audioThisWeek;
+
+      try {
+        audioToday = await Audio.count({
+          where: {
+            user_id: userId,
+            created_at: {
+              [Op.gte]: today
+            }
+          }
+        });
+        console.log('audioToday count:', audioToday);
+      } catch (err) {
+        console.error('Error counting today\'s audio:', err);
+        audioToday = 0;
+      }
+
+      try {
+        audioTotal = await Audio.count({
+          where: { user_id: userId },
+        });
+        console.log('audioTotal count:', audioTotal);
+      } catch (err) {
+        console.error('Error counting total audio:', err);
+        audioTotal = 0;
+      }
+
+      try {
+        audioPending = await Audio.count({
+          where: { user_id: userId, status: 'pending' },
+        });
+        console.log('audioPending count:', audioPending);
+      } catch (err) {
+        console.error('Error counting pending audio:', err);
+        audioPending = 0;
+      }
+
+      try {
+        audioThisWeek = await Audio.count({
+          where: {
+            user_id: userId,
+            created_at: {
+              [Op.gte]: sequelize.literal("NOW() - INTERVAL '7 days'")
+            }
+          }
+        });
+        console.log('audioThisWeek count:', audioThisWeek);
+      } catch (err) {
+        console.error('Error counting this week\'s audio:', err);
+        audioThisWeek = 0;
+      }
+
+      return {
+        status: 'success',
+        data: {
+          audioToday: audioToday || 0,
+          audioTotal: audioTotal || 0,
+          audioPending: audioPending || 0,
+          audioThisWeek: audioThisWeek || 0
+        },
+      };
+    }
+    catch (error) {
+      console.error('Fetch statistics error:', error);
+      throw new Error('Fetch statistics failed: ' + error.message);
+    }
+  }
 }
 
 module.exports = new AudioService();

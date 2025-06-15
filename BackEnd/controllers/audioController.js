@@ -76,6 +76,28 @@ class AudioController {
       res.status(500).json({ error: error.message || 'Processing pending audios failed' });
     }
   }
+  async fetchAudioByUser(req,res){
+    try{
+      const userId = req.user.id; 
+      const result = await audioService.fetchAudioByUser(userId);
+      res.json(result);
+    }
+    catch (error) {
+      console.error('Fetch audio by user error:', error);
+      res.status(500).json({ error: error.message || 'Fetching audio by user failed' });
+    }
+  }
+  async fetchStatestics(req,res) {
+    try{
+      const userId = req.user.id;
+      const result =await audioService.fetchStatestics(userId);
+      res.json(result);
+    }
+    catch (error) {
+      console.error('Fetch statistics error:', error);
+      res.status(500).json({ error: error.message || 'Fetching statistics failed' });
+    }
+  }
 }
 
 module.exports = new AudioController(); 
