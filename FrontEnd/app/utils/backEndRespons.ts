@@ -1,5 +1,5 @@
 interface BackendResponse<T> {
-    status: 'success' | 'error';
+    status: "success" | "error" | "info" | "warning"
     data: T;
     message?: string;
   }

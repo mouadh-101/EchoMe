@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -17,6 +16,10 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react"
+import { authService } from "@/app/services/authService"
+import { UserData } from "@/app/services/authService"
+import { useState, useEffect } from "react"
+
 
 interface AppSidebarProps {
   activeSection: string
@@ -24,7 +27,23 @@ interface AppSidebarProps {
 
 export function AppSidebar({ activeSection }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
+  const [user, setUser] = useState<UserData | null>(null)
 
+  const fetchUser = async () => {
+    try {
+      const response = await authService.whoami()
+      if (response.status === "success") {
+        setUser(response.data)
+      } else {
+        console.error("User fetch failed:", response.message)
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error)
+    }
+  }
+  useEffect(() => {
+    fetchUser()
+  }, [])
   const navItems = [
     { id: "dashboard", icon: Home, label: "Dashboard", href: "/dashboard" },
     { id: "record", icon: Mic, label: "Record", href: "/record" },
@@ -37,9 +56,8 @@ export function AppSidebar({ activeSection }: AppSidebarProps) {
 
   return (
     <div
-      className={`bg-[#1A1A1A] border-r border-[#333333] flex flex-col h-screen transition-all duration-300 ${
-        collapsed ? "w-20" : "w-64"
-      }`}
+      className={`bg-[#1A1A1A] border-r border-[#333333] flex flex-col h-screen transition-all duration-300 ${collapsed ? "w-20" : "w-64"
+        }`}
     >
       {/* Logo/Brand */}
       <div className="p-6 border-b border-[#333333] flex items-center justify-between">
@@ -72,11 +90,10 @@ export function AppSidebar({ activeSection }: AppSidebarProps) {
                   <Link href={item.href}>
                     <Button
                       variant="ghost"
-                      className={`w-full justify-start px-4 py-3 rounded-xl transition-all duration-300 ${
-                        isActive
+                      className={`w-full justify-start px-4 py-3 rounded-xl transition-all duration-300 ${isActive
                           ? "bg-[#1FB2A6] text-[#0E0E0E] shadow-[0_0_15px_rgba(31,178,166,0.3)]"
                           : "text-[#F4EBDC]/70 hover:text-[#F4EBDC] hover:bg-[#0E0E0E]/50"
-                      }`}
+                        }`}
                     >
                       <Icon className={`h-5 w-5 ${isActive ? "text-[#0E0E0E]" : ""} ${!collapsed ? "mr-3" : ""}`} />
                       {!collapsed && <span>{item.label}</span>}
@@ -102,8 +119,7 @@ export function AppSidebar({ activeSection }: AppSidebarProps) {
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">Alex Johnson</p>
-              <p className="text-xs text-[#F4EBDC]/50 truncate">Premium</p>
+              <p className="text-sm font-medium truncate">{user?.name || "Client "}</p>
             </div>
           )}
         </div>

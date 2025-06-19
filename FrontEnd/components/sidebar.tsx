@@ -3,12 +3,33 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Home, Mic, FolderOpen, Brain, Settings, User, LogOut } from "lucide-react"
-
+import { authService } from "@/app/services/authService"
+import { UserData } from "@/app/services/authService"
+import { useState, useEffect } from "react"
 interface SidebarProps {
   activeTab?: string
+
 }
 
+
 export function Sidebar({ activeTab }: SidebarProps) {
+  const [user, setUser] = useState<UserData | null>(null)
+  
+  const fetchUser = async () => {
+    try {
+      const response = await authService.whoami()
+      if (response.status === "success") {
+        setUser(response.data)
+      } else {
+        console.error("User fetch failed:", response.message)
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error)
+    }
+  }
+  useEffect(() => {
+    fetchUser()
+  }, [])
   const navItems = [
     { id: "home", icon: Home, label: "Dashboard", href: "/dashboard" },
     { id: "record", icon: Mic, label: "Record", href: "/record" },
@@ -60,8 +81,7 @@ export function Sidebar({ activeTab }: SidebarProps) {
             <User className="h-5 w-5 text-[#0E0E0E]" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">Alex Johnson</p>
-            <p className="text-xs text-[#F4EBDC]/50 truncate">Premium</p>
+            <p className="text-sm font-medium truncate">{user?.name || "Client "}</p>
           </div>
         </div>
         <Button

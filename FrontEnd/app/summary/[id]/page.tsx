@@ -9,6 +9,9 @@ import { AudioPlayer } from "@/components/audio/audio-player"
 import { Clock, MapPin, Smile, CheckSquare, Tag, Calendar, BookOpen } from "lucide-react"
 import { userAudioData } from "@/app/services/audioService"
 import { audioService } from "@/app/services/audioService"
+import { EchoAlert } from "@/components/ui/echo-alert"
+import { formatDistanceToNow } from 'date-fns'
+import { toDoListService } from "@/app/services/toDoListService"
 
 export default function SummaryPage() {
   const [audioData, setAudioData] = useState<userAudioData | null>(null)
@@ -26,6 +29,20 @@ export default function SummaryPage() {
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
+
+  const [showAlert, setShowAlert] = useState<{
+    show: boolean
+    type: "success" | "error" | "info" | "warning"
+    message: string
+    subMessage?: string
+  }>({ show: false, type: "success", message: "" })
+
+  const showAlertMessage = (type: "success" | "error" | "info" | "warning", message: string, subMessage?: string) => {
+    setShowAlert({ show: true, type, message, subMessage })
+    setTimeout(() => {
+      setShowAlert({ show: false, type: "success", message: "" })
+    }, 3000)
+  }
 
   // Fetch audio data by ID (this would typically be done in a useEffect)
   const fetchAudioData = async (id: number) => {
@@ -53,11 +70,34 @@ export default function SummaryPage() {
   const fullTranscript = audioData?.transcription?.text || "No summary available."
 
   const shortTranscript = fullTranscript?.substring(0, 150) + "..."
+  const handleOnGenerateToDo = async (audioId: number) => {
+    try {
+      const respence = await toDoListService.createToDoList(audioId);
+      if (respence.status === "success") {
+        showAlertMessage("success", "To-Do List created successfully!", "You can view it in the To-Do section.")
+        window.location.href = `/todos/${respence.data.id}`;
+      } else if (respence.status === "warning") {
+        showAlertMessage("warning", "To-Do List already exists", "You can view it in the To-Do section.")
+        window.location.href = `/todos/${respence.data.id}`;
+      }
+    } catch (error) {
+      console.error("Error creating To-Do List:", error)
+      showAlertMessage("error", "Failed to create To-Do List", "Please try again later.")
+    }
+  }
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
       <h1 className="font-serif text-3xl font-bold mb-6">Smart Summary</h1>
-
+      {showAlert.show && (
+        <EchoAlert
+          type={showAlert.type}
+          message={showAlert.message}
+          subMessage={showAlert.subMessage}
+          dismissible={true}
+          onDismiss={() => setShowAlert({ show: false, type: "success", message: "" })}
+        />
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left column - Transcript and playback */}
         <div className="space-y-6">
@@ -68,9 +108,7 @@ export default function SummaryPage() {
               <div className="flex items-center gap-2 text-sm text-[#F4EBDC]/70 mb-4">
                 <Clock className="h-4 w-4" />
                 <span>
-                  {audioData?.created_at
-                    ? new Date(audioData.created_at).toLocaleDateString()
-                    : 'Unknown date'}
+                  {audioData?.created_at ? formatDistanceToNow(new Date(audioData.created_at), { addSuffix: true }) : ""}
                 </span>
                 <span>•</span>
                 <span>{formatDurationToHHMMSS(audioData?.duration)}</span>
@@ -80,7 +118,7 @@ export default function SummaryPage() {
                 src={audioData?.file_url}
                 title={audioData?.title}
                 compact={false}
-               />
+              />
 
               <div className="flex items-center gap-2 mt-6 mb-4">
                 <Smile className="h-4 w-4 text-[#F4EBDC]/70 ml-2" />
@@ -127,45 +165,15 @@ export default function SummaryPage() {
               <h2 className="text-xl font-medium mb-4">Smart Actions</h2>
 
               <div className="grid grid-cols-2 gap-4">
-                <Link href="/actions/todos">
-                  <Button
-                    variant="outline"
-                    className="w-full h-24 flex flex-col items-center justify-center rounded-xl bg-transparent border-[#333333] hover:bg-[#0E0E0E] hover:border-[#1FB2A6] transition-all"
-                  >
-                    <CheckSquare className="h-6 w-6 mb-2 text-[#1FB2A6]" />
-                    <span>Generate To-Do</span>
-                  </Button>
-                </Link>
 
-                <Link href="/actions/keywords">
-                  <Button
-                    variant="outline"
-                    className="w-full h-24 flex flex-col items-center justify-center rounded-xl bg-transparent border-[#333333] hover:bg-[#0E0E0E] hover:border-[#1FB2A6] transition-all"
-                  >
-                    <Tag className="h-6 w-6 mb-2 text-[#1FB2A6]" />
-                    <span>Extract Keywords</span>
-                  </Button>
-                </Link>
-
-                <Link href="/actions/journal">
-                  <Button
-                    variant="outline"
-                    className="w-full h-24 flex flex-col items-center justify-center rounded-xl bg-transparent border-[#333333] hover:bg-[#0E0E0E] hover:border-[#1FB2A6] transition-all"
-                  >
-                    <BookOpen className="h-6 w-6 mb-2 text-[#1FB2A6]" />
-                    <span>Generate Journal</span>
-                  </Button>
-                </Link>
-
-                <Link href="/actions/calendar">
-                  <Button
-                    variant="outline"
-                    className="w-full h-24 flex flex-col items-center justify-center rounded-xl bg-transparent border-[#333333] hover:bg-[#0E0E0E] hover:border-[#1FB2A6] transition-all"
-                  >
-                    <Calendar className="h-6 w-6 mb-2 text-[#1FB2A6]" />
-                    <span>Suggest Events</span>
-                  </Button>
-                </Link>
+                <Button
+                  variant="outline"
+                  className="w-full h-24 flex flex-col items-center justify-center rounded-xl bg-transparent border-[#333333] hover:bg-[#0E0E0E] hover:border-[#1FB2A6] transition-all"
+                  onClick={() => handleOnGenerateToDo(audioData?.id || 0)}
+                >
+                  <CheckSquare className="h-6 w-6 mb-2 text-[#1FB2A6]" />
+                  <span>Generate To-Do</span>
+                </Button>
               </div>
             </CardContent>
           </Card>

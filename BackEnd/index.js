@@ -6,6 +6,7 @@ const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const audioRoute = require('./routes/audio');
+const toDoListRoute= require('./routes/toDoList');
 const errorHandler = require('./middleware/errorHandler');
 const initializeDatabase = require('./config/initDb');
 const { testConnection, sequelize } = require('./config/database');
@@ -31,7 +32,7 @@ app.use(express.json());
 // Authentication routes (signup, login)
 app.use('/api/auth', authRoutes);
 app.use('/api/audio', audioRoute);
-
+app.use('/api/todoList', toDoListRoute);
 
 // ===== Error Handling =====
 // Handle 404 errors - when a route is not found

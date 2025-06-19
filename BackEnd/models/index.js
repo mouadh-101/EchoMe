@@ -8,6 +8,8 @@ const AudioModelDefinition = require('./audio');
 const TagModelDefinition = require('./tag');
 const SummaryModelDefinition = require('./summary');
 const TranscriptionModelDefinition = require('./Transcription');
+const TodoListModelDefinition = require('./ToDoList');
+const TodoModelDefinition = require('./ToDo');
 
 
 
@@ -20,6 +22,8 @@ db.Audio=AudioModelDefinition(sequelize, Sequelize.DataTypes);
 db.Tag = TagModelDefinition(sequelize, Sequelize.DataTypes);
 db.Summary = SummaryModelDefinition(sequelize, Sequelize.DataTypes);
 db.Transcription = TranscriptionModelDefinition(sequelize, Sequelize.DataTypes);
+db.TodoList = TodoListModelDefinition(sequelize, Sequelize.DataTypes);
+db.Todo = TodoModelDefinition(sequelize, Sequelize.DataTypes);
 
 
 

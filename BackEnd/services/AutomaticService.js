@@ -75,6 +75,45 @@ Transcription:
             };
         }
     }
+    async generateTodoList(transcription) {
+        const prompt = `
+Based on the following transcription, generate a Todo list.
+Return in JSON and only JSON format like:
+{
+  "TodoList":[
+    "your first todo item",
+    "your second todo item",
+    "your third todo item"
+  ]
+}
+
+Transcription:
+"${transcription}"
+`;
+
+        const output = await this.queryGemini(prompt);
+
+        try {
+            const matches = [...output.matchAll(/{[\s\S]+?}/g)];
+            const lastMatch = matches[matches.length - 1];
+
+            if (!lastMatch) throw new Error("No JSON found in model output.");
+
+            const json = JSON.parse(lastMatch[0]);
+            if (!Array.isArray(json.TodoList)) {
+                throw new Error("Missing title, mood, summary or tags.");
+            }
+
+            return json; 
+        } catch (err) {
+            console.error("JSON parsing failed. Full output:", output);
+            return {
+                status: "error",
+                message: "Tagging failed: Invalid JSON response from Gemini.",
+                rawOutput: output
+            };
+        }
+    }
 }
 
 module.exports = new AutomaticService();
