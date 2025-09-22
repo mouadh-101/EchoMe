@@ -18,7 +18,6 @@ const dbConfig = {
     idle: 10000
   }
 };
-
 // Sequelize connection
 const sequelize = new Sequelize(
   dbConfig.database,

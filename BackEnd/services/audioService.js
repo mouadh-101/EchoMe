@@ -8,8 +8,6 @@ const client = require('../config/assemblyAi');
 const AutomaticService = require('./AutomaticService');
 const { Op, fn, col } = require('sequelize');
 
-ffmpeg.setFfmpegPath('C:/Users/mouad/scoop/apps/ffmpeg/current/bin/ffmpeg.exe');
-ffmpeg.setFfprobePath('C:/Users/mouad/scoop/apps/ffmpeg/current/bin/ffprobe.exe');
 
 class AudioService {
   async uploadAudio(filePath) {

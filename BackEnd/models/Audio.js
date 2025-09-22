@@ -59,7 +59,8 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
   Audio.afterCreate((audio) => {
-    const audioService = require('../services/AudioService');
+    console.log('💡 afterCreate hook triggered for audio', audio.id);
+    const audioService = require('../services/audioService');
     setImmediate(() => audioService.processAudio(audio).catch(console.error));
   });
 
