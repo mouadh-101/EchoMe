@@ -110,73 +110,44 @@ class AudioService {
       throw new Error('Tagging failed: ' + error.message);
     }
   }
-  async processPendingAudios() {
-    const audios = await Audio.findAll({
-      where: { status: 'pending' },
-      include: [
-        {
-          model: Transcription, as: 'transcription'
-        },
-        {
-          model: Summary, as: 'summary',
-        }
-      ],
+  async processAudio(audio) {
+  try {
+    const transcriptResult = await this.audioTranscript(audio.file_url);
+    if (!transcriptResult || transcriptResult.status !== 'success' || !transcriptResult.text) {
+      await audio.update({ status: 'error' });
+      return;
+    }
+
+    const transcriptText = transcriptResult.text;
+    const taggingResult = await this.autoTagging(transcriptText);
+    const { title, tags, mood, summary } = taggingResult.data;
+
+    const tagInstances = await Promise.all(
+      tags.map(tagName => Tag.findOrCreate({ where: { name: tagName } }).then(([tag]) => tag))
+    );
+
+    const summaryInstance = await Summary.findOrCreate({
+      where:{ audio_id: audio.id },
+      defaults: { summary_text: summary }
+    }).then(([summary]) => summary);
+
+    await sequelize.transaction(async (t) => {
+      if (audio.transcription) {
+        await audio.transcription.update({ text: transcriptText }, { transaction: t });
+      } else {
+        await Transcription.create({ audio_id: audio.id, text: transcriptText }, { transaction: t });
+      }
+
+      await audio.update({ title, mood, status: 'ready' }, { transaction: t });
+      await audio.setTags(tagInstances, { transaction: t });
     });
 
-    for (const audio of audios) {
-      try {
-        // Step 1: Generate transcription
-        const transcriptResult = await this.audioTranscript(audio.file_url);
-
-        if (!transcriptResult || transcriptResult.status !== 'success' || !transcriptResult.text) {
-          console.warn(`No transcription generated for audio ${audio.id}`);
-          await audio.update({ status: 'error' });
-          continue;
-        }
-
-        const transcriptText = transcriptResult.text;
-        // Step 2: Generate tags, title, mood
-        const taggingResult = await this.autoTagging(transcriptText);
-        if (taggingResult.status === 'error') {
-          console.warn(`Tagging failed for audio ${audio.id}`, taggingResult.message);
-          await audio.update({ status: 'error' });
-          continue;
-        }
-        const { title, tags, mood,summary } = taggingResult.data;
-        // Step 3: Upsert tags summary and transactionally update audio + transcription
-        const tagInstances = await Promise.all(
-          tags.map(tagName => Tag.findOrCreate({ where: { name: tagName } }).then(([tag]) => tag))
-        );
-        
-        const summaryInstance = await Summary.findOrCreate({
-          where:{ audio_id: audio.id },
-          defaults: { summary_text: summary }
-        }).then(([summary]) => summary);
-        if (!summaryInstance) {
-          console.warn(`Failed to create summary for audio ${audio.id}`);
-          await audio.update({ status: 'error' });
-          continue;
-        }
-
-        await sequelize.transaction(async (t) => {
-          if (audio.transcription) {
-            await audio.transcription.update({ text: transcriptText }, { transaction: t });
-          } else {
-            await Transcription.create({ audio_id: audio.id, text: transcriptText }, { transaction: t });
-          }
-
-          await audio.update({ title, mood, status: 'ready' }, { transaction: t });
-          await audio.setTags(tagInstances, { transaction: t });
-        });
-
-        console.log(`Processed audio ${audio.id} successfully.`);
-
-      } catch (err) {
-        console.error(`Error processing audio ${audio.id}:`, err.message);
-        await audio.update({ status: 'error' });
-      }
-    }
+  } catch (err) {
+    console.error(`Error processing audio ${audio.id}:`, err.message);
+    await audio.update({ status: 'error' });
   }
+}
+
   async fetchAudioByUser(userId) {
     try {
       const audios = await Audio.findAll({
@@ -218,33 +189,12 @@ class AudioService {
             }
           }
         });
-        console.log('audioToday count:', audioToday);
-      } catch (err) {
-        console.error('Error counting today\'s audio:', err);
-        audioToday = 0;
-      }
-
-      try {
         audioTotal = await Audio.count({
           where: { user_id: userId },
         });
-        console.log('audioTotal count:', audioTotal);
-      } catch (err) {
-        console.error('Error counting total audio:', err);
-        audioTotal = 0;
-      }
-
-      try {
         audioPending = await Audio.count({
           where: { user_id: userId, status: 'pending' },
         });
-        console.log('audioPending count:', audioPending);
-      } catch (err) {
-        console.error('Error counting pending audio:', err);
-        audioPending = 0;
-      }
-
-      try {
         audioThisWeek = await Audio.count({
           where: {
             user_id: userId,
@@ -253,10 +203,8 @@ class AudioService {
             }
           }
         });
-        console.log('audioThisWeek count:', audioThisWeek);
-      } catch (err) {
-        console.error('Error counting this week\'s audio:', err);
-        audioThisWeek = 0;
+      }catch (err) {
+        throw err;
       }
 
       return {

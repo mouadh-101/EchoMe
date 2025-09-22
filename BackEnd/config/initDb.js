@@ -1,5 +1,4 @@
 const { sequelize } = require('./database');
-const User = require('../models/User');
 
 // Initialize database tables
 async function initializeDatabase() {

@@ -62,7 +62,7 @@ const authController = {
     try {
       const user = req.user;
       const { email, name } = req.body;
-      const userData = await authService.updateProfile(email, name,user?.id);
+      const userData = await authService.updateProfile(email, name, user?.id);
       res.status(200).json({
         status: 'success',
         data: userData
@@ -74,7 +74,7 @@ const authController = {
   async updatePassword(req, res, next) {
     try {
       const user = req.user;
-      const {currentPassword, newPassword } = req.body;
+      const { currentPassword, newPassword } = req.body;
       const userData = await authService.updatePassword(user?.email, currentPassword, newPassword);
       res.status(200).json({
         status: 'success',
@@ -83,7 +83,21 @@ const authController = {
     } catch (error) {
       next(error);
     }
+  },
+  async logout(req, res, next) {
+    try {
+      const token = req.headers.authorization?.split(" ")[1];
+      if (!token) {
+        return res.status(400).json({ status: "error", message: "No token provided" });
+      }
+
+      await authService.logout(token);
+
+      res.json({ status: "success", message: "Logged out successfully" });
+    } catch (err) {
+      res.status(500).json({ status: "error", message: err.message });
+    }
   }
-};
+}
 
 module.exports = authController;

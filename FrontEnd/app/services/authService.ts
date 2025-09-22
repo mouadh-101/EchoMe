@@ -1,4 +1,4 @@
-import { setToken , getToken } from '../utils/auth';
+import { setToken, getToken } from '../utils/auth';
 import { BackendResponse } from '../utils/backEndRespons';
 
 interface AuthFormData {
@@ -127,6 +127,17 @@ class AuthService {
       throw new Error(error.message || 'Password update failed');
     }
   }
+  async handleLogout() {
+  await fetch(`${this.baseUrl}/logout`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  })
+
+  localStorage.removeItem("token")
+  window.location.href = "/auth"
+}
 }
 
 export const authService = new AuthService();

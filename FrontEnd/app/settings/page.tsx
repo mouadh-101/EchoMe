@@ -43,7 +43,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!isAuthenticated()) {
-      router.push("/auth") // or any appropriate route
+      router.push("/auth")
     }
     const fetchUser = async () => {
       try {
@@ -123,6 +123,9 @@ export default function SettingsPage() {
   const handlePasswordCancel = () => {
     setPasswordData({ current: "", new: "", confirm: "" })
     setIsEditingPassword(false)
+  }
+  const handleLogout=async ()=>{
+    await authService.handleLogout();
   }
 
   return (
@@ -367,6 +370,7 @@ export default function SettingsPage() {
               </div>
 
               <Button
+                onClick={handleLogout}
                 variant="outline"
                 className="w-full py-4 mt-6 rounded-2xl bg-transparent border-[#333333] hover:bg-[#1A1A1A] text-[#FF4E4E] font-medium"
               >

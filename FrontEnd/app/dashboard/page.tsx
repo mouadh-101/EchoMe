@@ -122,6 +122,17 @@ export default function Dashboard() {
           >
             All
           </Badge>
+          {audio.map((audio) => (
+            audio.tags.map((tag) => (
+              <Badge
+                key={tag.id}
+                variant="outline"
+                className="bg-[#333333] hover:bg-[#333333]/80 text-[#F4EBDC] border-[#333333] rounded-full px-4 py-2 cursor-pointer whitespace-nowrap"
+              >
+                {tag.name}
+              </Badge>
+            ))
+          ))}
         </div>
       </div>
 
@@ -130,6 +141,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {audio.map((audio) => (
           <EchoCard
+            key={audio.id}
             id={audio.id}
             title={
               audio.title

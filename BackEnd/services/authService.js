@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-
+const tokenBlacklist = require( "../services/tokenBlacklist.js")
 const { User } = require('../models');
 
 class AuthService {
@@ -106,12 +106,19 @@ class AuthService {
     );
   }
 
-  verifyToken(token) {
+  async verifyToken(token) {
     try {
-      return jwt.verify(token, process.env.JWT_SECRET);
+      if (await tokenBlacklist.isBlacklisted(token)) {
+        throw new Error("Token is blacklisted")
+      }
+      const decoded = jwt.verify(token, process.env.JWT_SECRET)
+      return decoded 
     } catch (error) {
-      throw new Error('Invalid token');
+      throw new Error("Invalid token")
     }
+  }
+  logout(token) {
+    return tokenBlacklist.addToBlacklist(token);
   }
 }
 

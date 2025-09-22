@@ -23,9 +23,6 @@ router.get('/',verifyToken, audioController.fetchAudioByUser);
 router.get('/stats', verifyToken, audioController.fetchStatestics);
 // GET /audById/:id
 router.get('/audById/:id', verifyToken, audioController.fetchAudioById);
-// to be deleted later 
-router.post('/transcribe', audioController.audioTranscribe);
-router.post('/tagging-title', audioController.audioTaggingTitle);
-router.put('/process',audioController.processPendingAudios);
+
 
 module.exports = router;

@@ -1,15 +1,25 @@
 "use client"
 
-import { useState } from "react"
+import { use, useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { EchoCard } from "@/components/echo-card"
 import { Search, Filter, Grid, List } from "lucide-react"
+import { userAudioData, audioService } from "../services/audioService"
+import { formatDistanceToNow } from "date-fns"
 
 export default function LibraryPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [userAudio, setUserAudio] = useState<(userAudioData[])>([])
+  useEffect(() => {
+    audioService.userAudio().then((res) => {
+      if (res.status === "success") {
+        setUserAudio(res.data)
+      }
+    })
+  }, [])
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -67,88 +77,46 @@ export default function LibraryPage() {
           <Badge
             variant="outline"
             className="bg-[#1FB2A6] hover:bg-[#1FB2A6]/80 text-[#0E0E0E] border-[#1FB2A6] rounded-full px-4 py-2 cursor-pointer whitespace-nowrap"
-          >
-            All (154)
+          > All
           </Badge>
-          <Badge
-            variant="outline"
-            className="bg-transparent hover:bg-[#1A1A1A]/80 text-[#F4EBDC]/70 border-[#333333] rounded-full px-4 py-2 cursor-pointer whitespace-nowrap"
-          >
-            Ideas (42)
-          </Badge>
-          <Badge
-            variant="outline"
-            className="bg-transparent hover:bg-[#1A1A1A]/80 text-[#F4EBDC]/70 border-[#333333] rounded-full px-4 py-2 cursor-pointer whitespace-nowrap"
-          >
-            Meetings (28)
-          </Badge>
-          <Badge
-            variant="outline"
-            className="bg-transparent hover:bg-[#1A1A1A]/80 text-[#F4EBDC]/70 border-[#333333] rounded-full px-4 py-2 cursor-pointer whitespace-nowrap"
-          >
-            Tasks (35)
-          </Badge>
-          <Badge
-            variant="outline"
-            className="bg-transparent hover:bg-[#1A1A1A]/80 text-[#F4EBDC]/70 border-[#333333] rounded-full px-4 py-2 cursor-pointer whitespace-nowrap"
-          >
-            Personal (49)
-          </Badge>
+          {userAudio.map((audio) =>
+            audio.tags.map((tag) => (
+              <Badge
+                key={tag.id}
+                variant="outline"
+                className="bg-[#1A1A1A] hover:bg-[#1A1A1A]/80 text-[#F4EBDC]/70 border-[#333333] rounded-full px-4 py-2 cursor-pointer whitespace-nowrap"
+              >
+                {tag.name}
+              </Badge>
+            ))
+          )}
         </div>
       </div>
 
       <div
-        className={`${
-          viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"
-        }`}
+        className={`${viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"
+          }`}
       >
-        <EchoCard
-          title="Morning Reflection"
-          preview="I need to remember to follow up with the team about the project timeline and make sure we're all aligned on the deliverables for next week's sprint..."
-          timestamp="Today, 8:32 AM"
-          tags={["Work", "Ideas"]}
-          isPinned={true}
-        />
-
-        <EchoCard
-          title="Project Brainstorm"
-          preview="The new feature should include a way for users to categorize their notes automatically using AI. We could implement machine learning algorithms to detect patterns..."
-          timestamp="Yesterday, 2:15 PM"
-          tags={["Work", "Meeting"]}
-          isPinned={false}
-        />
-
-        <EchoCard
-          title="Shopping List"
-          preview="Need to pick up: milk, eggs, bread, and that new book I've been wanting to read about productivity and time management techniques..."
-          timestamp="Jun 1, 4:45 PM"
-          tags={["Personal", "Tasks"]}
-          isPinned={false}
-        />
-
-        <EchoCard
-          title="Book Recommendations"
-          preview="John suggested 'Atomic Habits' and 'Deep Work' as good productivity books that could help with focus and building better systems for personal growth..."
-          timestamp="May 28, 11:20 AM"
-          tags={["Personal", "Ideas"]}
-          isPinned={false}
-        />
-
-        <EchoCard
-          title="Weekly Goals"
-          preview="This week I want to finish the project proposal, start the new exercise routine, and organize my workspace to be more conducive to deep work..."
-          timestamp="May 25, 9:05 AM"
-          tags={["Personal", "Tasks"]}
-          isPinned={false}
-        />
-
-        <EchoCard
-          title="Meeting Notes"
-          preview="Key takeaways from the client meeting: they want to prioritize mobile experience and need delivery by Q3. Budget approved for additional resources..."
-          timestamp="May 23, 3:30 PM"
-          tags={["Work", "Meeting"]}
-          isPinned={false}
-        />
+        {userAudio.map((audio) => (
+          <EchoCard
+            key={audio.id}
+            id={audio.id}
+            title={
+              audio.title
+                ? audio.title.split(' ').slice(0, 5).join(' ') + (audio.title.split(' ').length > 5 ? '...' : '')
+                : 'Untitled'
+            }
+            preview={
+              audio.description
+                ? audio.description.length > 100
+                  ? audio.description.slice(0, 100) + '...'
+                  : audio.description
+                : ''
+            }
+            timestamp={formatDistanceToNow(new Date(audio.created_at), { addSuffix: true })}
+            tags={audio.tags.map((tag) => tag.name)}
+          />
+        ))}
       </div>
     </div>
   )

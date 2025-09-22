@@ -28,6 +28,10 @@ interface AppSidebarProps {
 export function AppSidebar({ activeSection }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [user, setUser] = useState<UserData | null>(null)
+  
+  const handeleLogout=async ()=>{
+    await authService.handleLogout()
+  }
 
   const fetchUser = async () => {
     try {
@@ -48,17 +52,16 @@ export function AppSidebar({ activeSection }: AppSidebarProps) {
     { id: "dashboard", icon: Home, label: "Dashboard", href: "/dashboard" },
     { id: "record", icon: Mic, label: "Record", href: "/record" },
     { id: "library", icon: FolderOpen, label: "Library", href: "/library" },
-    { id: "summary", icon: Brain, label: "Smart Summary", href: "/summary" },
-    { id: "actions", icon: Zap, label: "Smart Actions", href: "/actions" },
     { id: "todos", icon: CheckSquare, label: "To-Do Lists", href: "/todos" },
     { id: "settings", icon: Settings, label: "Settings", href: "/settings" },
   ]
 
   return (
     <div
-      className={`bg-[#1A1A1A] border-r border-[#333333] flex flex-col h-screen transition-all duration-300 ${collapsed ? "w-20" : "w-64"
+      className={`sticky top-0 bg-[#1A1A1A] border-r border-[#333333] flex flex-col h-screen transition-all duration-300 ${collapsed ? "w-20" : "w-64"
         }`}
     >
+
       {/* Logo/Brand */}
       <div className="p-6 border-b border-[#333333] flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center space-x-3">
@@ -91,8 +94,8 @@ export function AppSidebar({ activeSection }: AppSidebarProps) {
                     <Button
                       variant="ghost"
                       className={`w-full justify-start px-4 py-3 rounded-xl transition-all duration-300 ${isActive
-                          ? "bg-[#1FB2A6] text-[#0E0E0E] shadow-[0_0_15px_rgba(31,178,166,0.3)]"
-                          : "text-[#F4EBDC]/70 hover:text-[#F4EBDC] hover:bg-[#0E0E0E]/50"
+                        ? "bg-[#1FB2A6] text-[#0E0E0E] shadow-[0_0_15px_rgba(31,178,166,0.3)]"
+                        : "text-[#F4EBDC]/70 hover:text-[#F4EBDC] hover:bg-[#0E0E0E]/50"
                         }`}
                     >
                       <Icon className={`h-5 w-5 ${isActive ? "text-[#0E0E0E]" : ""} ${!collapsed ? "mr-3" : ""}`} />
@@ -127,6 +130,7 @@ export function AppSidebar({ activeSection }: AppSidebarProps) {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
+                onClick={handeleLogout}
                 variant="ghost"
                 className="w-full justify-start px-4 py-2 rounded-xl text-[#F4EBDC]/70 hover:text-[#F4EBDC] hover:bg-[#0E0E0E]/50"
               >

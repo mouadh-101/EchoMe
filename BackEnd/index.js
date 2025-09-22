@@ -10,6 +10,9 @@ const toDoListRoute= require('./routes/toDoList');
 const errorHandler = require('./middleware/errorHandler');
 const initializeDatabase = require('./config/initDb');
 const { testConnection, sequelize } = require('./config/database');
+const { redisClient, connectRedis } = require("./config/redisClient");
+
+
 
 // Create Express application
 const app = express();
@@ -22,6 +25,12 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 };
+
+// Connect to Redis
+connectRedis()
+  .then(() => console.log("Redis connected"))
+  .catch((err) => console.error("Redis connection failed:", err));
+
 
 app.use(cors(corsOptions));
 

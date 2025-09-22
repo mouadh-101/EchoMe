@@ -1,7 +1,8 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-// Database configuration object
+
+// Database configuration
 const dbConfig = {
   database: process.env.DB_DATABASE,
   username: process.env.DB_USER,
@@ -18,7 +19,7 @@ const dbConfig = {
   }
 };
 
-// Create database connection
+// Sequelize connection
 const sequelize = new Sequelize(
   dbConfig.database,
   dbConfig.username,
@@ -32,7 +33,7 @@ const sequelize = new Sequelize(
   }
 );
 
-// Test database connection
+// Test Sequelize connection
 async function testConnection() {
   try {
     await sequelize.authenticate();
@@ -42,10 +43,9 @@ async function testConnection() {
   }
 }
 
-// Export database connection and configuration
 module.exports = {
   sequelize,
   Sequelize,
   dbConfig,
   testConnection
-}; 
+};

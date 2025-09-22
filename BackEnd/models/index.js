@@ -4,9 +4,9 @@ const { sequelize, Sequelize } = require('../config/database');
 
 // Import model definitions
 const UserModelDefinition = require('./User');
-const AudioModelDefinition = require('./audio');
-const TagModelDefinition = require('./tag');
-const SummaryModelDefinition = require('./summary');
+const AudioModelDefinition = require('./Audio');
+const TagModelDefinition = require('./Tag');
+const SummaryModelDefinition = require('./Summary');
 const TranscriptionModelDefinition = require('./Transcription');
 const TodoListModelDefinition = require('./ToDoList');
 const TodoModelDefinition = require('./ToDo');

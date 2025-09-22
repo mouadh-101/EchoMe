@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 
 interface HorizontalWaveformProps {
   isActive?: boolean
@@ -16,13 +16,15 @@ export function HorizontalWaveform({
   backgroundColor = "transparent",
 }: HorizontalWaveformProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [amplitudes, setAmplitudes] = useState<number[]>([])
+  const amplitudesRef = useRef<number[]>([])
 
-  // Initialize amplitudes
+  // Initialize amplitudes when isActive changes
   useEffect(() => {
     const numBars = 50
-    const initialAmplitudes = Array.from({ length: numBars }, () => (isActive ? Math.random() * 0.5 + 0.2 : 0.1))
-    setAmplitudes(initialAmplitudes)
+    amplitudesRef.current = Array.from(
+      { length: numBars },
+      () => (isActive ? Math.random() * 0.5 + 0.2 : 0.1),
+    )
   }, [isActive])
 
   // Animation loop
@@ -56,27 +58,24 @@ export function HorizontalWaveform({
         ctx.fillRect(0, 0, canvas.width, canvas.height)
       }
 
-      const barWidth = Math.max(2, Math.floor(canvas.width / amplitudes.length) - 2)
+      const barWidth = Math.max(2, Math.floor(canvas.width / amplitudesRef.current.length) - 2)
       const centerY = canvas.height / 2
 
       // Update amplitudes if active
       if (isActive) {
-        setAmplitudes((prev) =>
-          prev.map((amp) => {
-            const change = (Math.random() - 0.5) * 0.1
-            return Math.max(0.1, Math.min(0.9, amp + change))
-          }),
-        )
+        amplitudesRef.current = amplitudesRef.current.map((amp) => {
+          const change = (Math.random() - 0.5) * 0.1
+          return Math.max(0.1, Math.min(0.9, amp + change))
+        })
       }
 
       // Draw bars
       ctx.fillStyle = color
-      amplitudes.forEach((amplitude, index) => {
+      amplitudesRef.current.forEach((amplitude, index) => {
         const barHeight = amplitude * canvas.height * 0.8
-        const x = index * (barWidth + 2) + (canvas.width - amplitudes.length * (barWidth + 2)) / 2
+        const x = index * (barWidth + 2) + (canvas.width - amplitudesRef.current.length * (barWidth + 2)) / 2
         const y = centerY - barHeight / 2
 
-        // Draw rounded bars
         ctx.beginPath()
         ctx.roundRect(x, y, barWidth, barHeight, 2)
         ctx.fill()
@@ -91,7 +90,7 @@ export function HorizontalWaveform({
       window.removeEventListener("resize", resizeCanvas)
       cancelAnimationFrame(animationFrameId)
     }
-  }, [amplitudes, isActive, height, color, backgroundColor])
+  }, [isActive, height, color, backgroundColor])
 
   return <canvas ref={canvasRef} className="w-full" style={{ height: `${height}px` }} />
 }

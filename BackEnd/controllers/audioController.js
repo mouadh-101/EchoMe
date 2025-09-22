@@ -37,45 +37,8 @@ class AudioController {
       res.status(500).json({ error: error.message || 'Audio creation failed' });
     }
   }
-  async audioTranscribe(req, res) {
-    try{
-      const { audioPath } = req.body; // Assuming audioPath is sent in the request body
-      if (!audioPath) {
-        return res.status(400).json({ 
-          status: 'error',
-          data: 'No audio path provided',
-        });
-      }
 
-      const result = await audioService.audioTranscript(audioPath);
-      res.json(result);
-    }
-    catch (error) {
-      console.error('Transcription error:', error);
-      res.status(500).json({ error: error.message || 'Transcription failed' });
-    }
-  }
-  async audioTaggingTitle(req, res) {
-    try{
-    const {transcription} = req.body;
-    const result = await audioService.autoTagging(transcription);
-    res.json(result);
 
-    }
-    catch (error) {
-      console.error('Tagging error:', error);
-      res.status(500).json({ error: error.message || 'Tagging failed' });
-    }
-  }
-  async processPendingAudios(req, res) {
-    try {
-      const result = await audioService.processPendingAudios();
-      res.json(result);
-    } catch (error) {
-      console.error('Process pending audios error:', error);
-      res.status(500).json({ error: error.message || 'Processing pending audios failed' });
-    }
-  }
   async fetchAudioByUser(req,res){
     try{
       const userId = req.user.id; 
