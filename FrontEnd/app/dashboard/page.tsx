@@ -64,7 +64,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-2xl font-bold text-[#1FB2A6]">{stats.audioToday}</p>
-                    <p className="text-sm text-[#F4EBDC]/70">Today's Echoes</p>
+                    <p className="text-sm text-[#F4EBDC]/70">Today&apos;s Echoes</p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-[#1FB2A6]/50" />
                 </div>

@@ -30,7 +30,7 @@ export default function ExamplesPage() {
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-8">
         <h1 className="font-serif text-3xl lg:text-4xl font-bold mb-2">Component Examples</h1>
-        <p className="text-[#F4EBDC]/70">Showcase of EchoMe's reusable UI components</p>
+        <p className="text-[#F4EBDC]/70">Showcase of EchoMe&apos;s reusable UI components</p>
       </div>
 
       {/* Alert Examples */}
