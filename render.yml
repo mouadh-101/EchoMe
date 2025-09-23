@@ -1,6 +1,12 @@
 services:
   - type: web
-    name: fullstack-app
+    name: echome-app
     env: docker
     docker:
       dockerfilePath: ./docker-compose.yml
+    dockerCommand: docker-compose up --build
+    buildFilter:
+      paths:
+        - BackEnd/**
+        - FrontEnd/**
+        - docker-compose.yml
