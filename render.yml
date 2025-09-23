@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: fullstack-app
+    env: docker
+    docker:
+      dockerfilePath: ./docker-compose.yml

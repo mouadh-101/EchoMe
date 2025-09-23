@@ -19,6 +19,9 @@ RUN npm install --production
 # Copy all backend source code
 COPY . .
 
+# Make wait-for-db.sh executable
+RUN chmod +x wait-for-db.sh
+
 # Expose backend port
 EXPOSE 5000
 
