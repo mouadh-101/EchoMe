@@ -7,10 +7,10 @@ services:
       - echo-postgres
       - echo-redis
     environment:
-      - DB_HOST=echo-postgres
+      - DB_HOST=dpg-d38rgjb3fgac73b9f2a0-a
       - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
+      - DB_USER=echome
+      - DB_PASSWORD=Tm7bEy8QJ7It5n7J7ctG1tjqpaPjAV6l
       - DB_DATABASE=echome
       # Redis
       - REDIS_HOST=echo-redis
