@@ -34,7 +34,7 @@ interface stats {
 }
 
 class AudioService {
-    private baseUrl = 'http://localhost:5000/api/audio';
+    private baseUrl = 'https://echo-backend-w51u.onrender.com/api/audio';
 
     async userAudio(): Promise<BackendResponse<userAudioData[]>> {
         try {

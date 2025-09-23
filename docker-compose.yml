@@ -55,4 +55,4 @@ services:
       - backend
     environment:
       # API URL (backend)
-      - NEXT_PUBLIC_API_URL=http://localhost:5000
+      - NEXT_PUBLIC_API_URL=https://echo-backend-w51u.onrender.com

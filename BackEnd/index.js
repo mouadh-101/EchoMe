@@ -20,7 +20,7 @@ const app = express();
 // ===== Middleware Setup =====
 // CORS configuration
 const corsOptions = {
-  origin: 'http://localhost:3000', // Frontend URL
+  origin: 'https://echo-frontend-ctoh.onrender.com', // Frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
