@@ -21,7 +21,7 @@ interface AuthResponse {
 }
 
 class AuthService {
-  private baseUrl = process.env.NEXT_PUBLIC_API_URL + '/api/auth';
+  private baseUrl = 'https://echo-backend-w51u.onrender.com/api/auth';
 
   async login(email: string, password: string): Promise<BackendResponse<AuthResponse>> {
     try {

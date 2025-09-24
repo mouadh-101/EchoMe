@@ -35,7 +35,7 @@ interface stats {
 }
 
 class AudioService {
-    private baseUrl = process.env.NEXT_PUBLIC_API_URL + '/api/audio';
+    private baseUrl = 'https://echo-backend-w51u.onrender.com/api/audio';
 
     async userAudio(): Promise<BackendResponse<userAudioData[]>> {
         try {

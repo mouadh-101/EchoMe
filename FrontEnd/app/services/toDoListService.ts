@@ -22,7 +22,7 @@ interface audioUrl{
 
 
 class ToDoListService {
-    private baseUrl = process.env.NEXT_PUBLIC_API_URL + '/api/todoList';
+    private baseUrl = 'https://echo-backend-w51u.onrender.com/api/todoList';
 
     async fetchToDoLists(): Promise<BackendResponse<toDoList[]>> {
         try {

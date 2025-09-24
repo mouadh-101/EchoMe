@@ -50,7 +50,7 @@ export const getUserData = async () => {
       throw new Error('No token found');
     }
 
-    const response = await fetch( process.env.NEXT_PUBLIC_API_URL+'/api/auth/whoami', {
+    const response = await fetch('https://echo-backend-w51u.onrender.com/api/auth/whoami', {
       headers: {
         'Authorization': `Bearer ${token}`
       }
