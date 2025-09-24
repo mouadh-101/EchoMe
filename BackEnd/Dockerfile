@@ -26,4 +26,4 @@ RUN chmod +x wait-for-db.sh
 EXPOSE 5000
 
 # Start the backend server
-CMD ["./wait-for-db.sh", "echo-postgres", "npm", "start"]
+CMD ["./wait-for-db.sh", "dpg-d38rgjb3fgac73b9f2a0-a", "npm", "start"]
