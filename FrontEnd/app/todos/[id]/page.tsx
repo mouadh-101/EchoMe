@@ -1,6 +1,6 @@
 "use client"
 
-import { useState,useEffect} from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,9 +9,10 @@ import { Badge } from "@/components/ui/badge"
 import { AudioPlayer } from "@/components/audio/audio-player"
 import { Clock, Plus } from "lucide-react"
 import { toDoListService } from "../../services/toDoListService"
-import { toDoList,toDo } from "../../services/toDoListService"
+import { toDoList, toDo } from "../../services/toDoListService"
 import { EchoAlert } from "@/components/ui/echo-alert"
-import {formatDistanceToNow} from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
+import AuthGuard from "@/components/guard/AuthGuard"
 
 
 export default function TodosPage() {
@@ -29,14 +30,14 @@ export default function TodosPage() {
       setShowAlert({ show: false, type: "success", message: "" })
     }, 3000)
   }
-  
+
   const fetchTodoList = async () => {
     try {
       const response = await toDoListService.getToDoListById(Number(window.location.pathname.split('/').pop()));
 
       if (response.status === "success") {
         setTodoList(response.data);
-        
+
       } else {
         console.error("Failed to fetch todo lists:", response.message);
       }
@@ -44,12 +45,12 @@ export default function TodosPage() {
       console.error("Error fetching todo lists:", error);
     }
   };
-  
+
   useEffect(() => {
     fetchTodoList();
   }, []);
 
-  
+
 
 
 
@@ -57,7 +58,7 @@ export default function TodosPage() {
     try {
       const response = await toDoListService.markOrUnmarkTodo(todoId);
       if (response.status === "success") {
-        showAlertMessage("success", response.status , "Todo updated successfully.");
+        showAlertMessage("success", response.status, "Todo updated successfully.");
         setTodoList(prev => {
           if (!prev) return prev;
           const updatedTodos = prev.Todos.map(todo =>
@@ -73,14 +74,14 @@ export default function TodosPage() {
       console.error("Error updating todo:", error);
     }
   }
-  
+
 
   return (
-    
-    <div className="container max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="font-serif text-3xl font-bold">To-Do Lists</h1>
-        {showAlert.show && (
+    <AuthGuard>
+      <div className="container max-w-4xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="font-serif text-3xl font-bold">To-Do Lists</h1>
+          {showAlert.show && (
             <EchoAlert
               type={showAlert.type}
               message={showAlert.message}
@@ -89,9 +90,9 @@ export default function TodosPage() {
               onDismiss={() => setShowAlert({ show: false, type: "success", message: "" })}
             />
           )}
-      </div>
+        </div>
 
-      <div className="space-y-6">
+        <div className="space-y-6">
           <Card key={todoList?.id} className="bg-[#1A1A1A] border-[#333333] rounded-2xl shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between p-6 pb-2">
               <div>
@@ -112,7 +113,7 @@ export default function TodosPage() {
               <div className="space-y-2">
                 {todoList?.Todos?.map((todo) => (
                   <div
-                  
+
                     key={todo.id}
                     className="flex items-center space-x-3 p-2 rounded-lg hover:bg-[#0E0E0E] transition-colors"
                   >
@@ -139,14 +140,15 @@ export default function TodosPage() {
                     size="sm"
                     className="text-[#F4EBDC]/70 hover:text-[#F4EBDC] hover:bg-[#0E0E0E]"
                   >
-                    View original audio 
+                    View original audio
                   </Button>
                 </Link>
               </div>
             </CardContent>
           </Card>
-        
+
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   )
 }

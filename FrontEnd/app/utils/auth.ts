@@ -1,3 +1,9 @@
+import { jwtDecode } from "jwt-decode";
+
+interface JwtPayload {
+  exp?: number; 
+  [key: string]: any;
+}
 export const getToken = () => {
   if (typeof window !== 'undefined') {
     return localStorage.getItem('token');
@@ -19,7 +25,22 @@ export const removeToken = () => {
 
 
 export const isAuthenticated = () => {
-  return !!getToken();
+  const token = getToken();
+  if (!token) return false;
+
+  try {
+    const decoded: JwtPayload = jwtDecode(token);
+
+    if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+      removeToken();
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("Invalid token:", err);
+    removeToken();
+    return false;
+  }
 };
 
 export const getUserData = async () => {
@@ -29,7 +50,7 @@ export const getUserData = async () => {
       throw new Error('No token found');
     }
 
-    const response = await fetch('http://localhost:3000/api/auth/whoami', {
+    const response = await fetch( process.env.NEXT_PUBLIC_API_URL+'/api/auth/whoami', {
       headers: {
         'Authorization': `Bearer ${token}`
       }

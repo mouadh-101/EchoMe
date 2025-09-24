@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { HorizontalWaveform } from "@/components/audio/horizontal-waveform"
 import { Mic, Square, Keyboard } from "lucide-react"
 import MicRecorder from "mic-recorder-to-mp3"
+import AuthGuard from "@/components/guard/AuthGuard"
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 })
 
@@ -89,49 +90,51 @@ export default function RecordPage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6">
-      <div className="w-full max-w-2xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="font-serif text-3xl lg:text-4xl font-bold mb-4">
-            {isRecording ? "Listening..." : "Ready to Record"}
-          </h1>
-          {isRecording && <p className="text-2xl text-[#1FB2A6] font-mono">{formatTime(recordingTime)}</p>}
-          <p className="text-[#F4EBDC]/70 mt-2">
-            {isRecording
-              ? "Speak naturally, I'm capturing your thoughts"
-              : "Click the microphone or press Ctrl+Space to start"}
-          </p>
-        </div>
+    <AuthGuard>
+      <div className="flex flex-col items-center justify-center min-h-screen p-6">
+        <div className="w-full max-w-2xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="font-serif text-3xl lg:text-4xl font-bold mb-4">
+              {isRecording ? "Listening..." : "Ready to Record"}
+            </h1>
+            {isRecording && <p className="text-2xl text-[#1FB2A6] font-mono">{formatTime(recordingTime)}</p>}
+            <p className="text-[#F4EBDC]/70 mt-2">
+              {isRecording
+                ? "Speak naturally, I'm capturing your thoughts"
+                : "Click the microphone or press Ctrl+Space to start"}
+            </p>
+          </div>
 
-        <div className="w-full mb-12">
-          <HorizontalWaveform isActive={isRecording} height={120} />
-        </div>
+          <div className="w-full mb-12">
+            <HorizontalWaveform isActive={isRecording} height={120} />
+          </div>
 
-        <div className="flex justify-center mb-12">
-          <Button
-            onClick={toggleRecording}
-            className={`w-24 h-24 lg:w-32 lg:h-32 rounded-full flex items-center justify-center transition-all duration-300 ${isRecording
+          <div className="flex justify-center mb-12">
+            <Button
+              onClick={toggleRecording}
+              className={`w-24 h-24 lg:w-32 lg:h-32 rounded-full flex items-center justify-center transition-all duration-300 ${isRecording
                 ? "bg-[#FF4E4E] hover:bg-[#FF4E4E]/90 shadow-[0_0_40px_rgba(255,78,78,0.6)]"
                 : "bg-[#1FB2A6] hover:bg-[#1FB2A6]/90 shadow-[0_0_40px_rgba(31,178,166,0.6)]"
-              } hover:scale-105`}
-          >
-            {isRecording ? (
-              <Square className="h-12 w-12 lg:h-16 lg:w-16 text-[#0E0E0E]" />
-            ) : (
-              <Mic className="h-12 w-12 lg:h-16 lg:w-16 text-[#0E0E0E]" />
-            )}
-          </Button>
-        </div>
-
-        {!isRecording && (
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-2 text-sm text-[#F4EBDC]/70">
-              <Keyboard className="h-4 w-4" />
-              <span>Keyboard shortcut: Ctrl + Space</span>
-            </div>
+                } hover:scale-105`}
+            >
+              {isRecording ? (
+                <Square className="h-12 w-12 lg:h-16 lg:w-16 text-[#0E0E0E]" />
+              ) : (
+                <Mic className="h-12 w-12 lg:h-16 lg:w-16 text-[#0E0E0E]" />
+              )}
+            </Button>
           </div>
-        )}
+
+          {!isRecording && (
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2 text-sm text-[#F4EBDC]/70">
+                <Keyboard className="h-4 w-4" />
+                <span>Keyboard shortcut: Ctrl + Space</span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   )
 }

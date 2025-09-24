@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Home, Mic, FolderOpen, Brain, CheckSquare } from "lucide-react"
+import { Home, Mic, FolderOpen, Settings, CheckSquare } from "lucide-react"
 
 interface BottomNavigationProps {
   activeTab: string
@@ -12,8 +12,9 @@ export function BottomNavigation({ activeTab }: BottomNavigationProps) {
     { id: "dashboard", icon: Home, label: "Home", href: "/dashboard" },
     { id: "record", icon: Mic, label: "Record", href: "/record" },
     { id: "library", icon: FolderOpen, label: "Library", href: "/library" },
-    { id: "summary", icon: Brain, label: "Summary", href: "/summary" },
     { id: "todos", icon: CheckSquare, label: "To-Dos", href: "/todos" },
+    { id: "settings", icon: Settings, label: "Settings", href: "/settings" },
+
   ]
 
   return (

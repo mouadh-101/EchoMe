@@ -11,4 +11,8 @@ router.put('/profile', verifyToken, authController.updateProfile);
 router.put('/password', verifyToken, authController.updatePassword);
 router.post('/logout', verifyToken, authController.logout);
 
+router.get('/keep-alive', (req, res) => {
+  res.status(200).send({ status: 'alive' });
+});
+
 module.exports = router;

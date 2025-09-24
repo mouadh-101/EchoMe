@@ -1,6 +1,7 @@
 import { setToken, getToken } from '../utils/auth';
 import { BackendResponse } from '../utils/backEndRespons';
 
+
 interface userAudioData {
     id: number;
     file_url: string;
@@ -34,7 +35,7 @@ interface stats {
 }
 
 class AudioService {
-    private baseUrl = 'https://echo-backend-w51u.onrender.com/api/audio';
+    private baseUrl = process.env.NEXT_PUBLIC_API_URL + '/api/audio';
 
     async userAudio(): Promise<BackendResponse<userAudioData[]>> {
         try {

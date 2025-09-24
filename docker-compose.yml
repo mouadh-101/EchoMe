@@ -7,10 +7,10 @@ services:
       - echo-postgres
       - echo-redis
     environment:
-      - DB_HOST=dpg-d38rgjb3fgac73b9f2a0-a
+      - DB_HOST=echo-postgres
       - DB_PORT=5432
-      - DB_USER=echome
-      - DB_PASSWORD=Tm7bEy8QJ7It5n7J7ctG1tjqpaPjAV6l
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
       - DB_DATABASE=echome
       # Redis
       - REDIS_HOST=redis-12133.c240.us-east-1-3.ec2.redns.redis-cloud.com
@@ -35,6 +35,9 @@ services:
       # Gemini
       - GEMINI_API_KEY=AIzaSyA-gD--_PIUYBtGWwZnwhQTJxgYLq6lfCM
 
+      # CORS
+      - CROSS=http://localhost:3000
+
   echo-postgres:
     image: postgres:16-alpine
     environment:
@@ -55,4 +58,4 @@ services:
       - backend
     environment:
       # API URL (backend)
-      - NEXT_PUBLIC_API_URL=https://echo-backend-w51u.onrender.com
+      - NEXT_PUBLIC_API_URL=localhost:5000

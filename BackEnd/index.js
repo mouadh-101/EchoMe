@@ -20,7 +20,7 @@ const app = express();
 // ===== Middleware Setup =====
 // CORS configuration
 const corsOptions = {
-  origin: 'https://echo-frontend-ctoh.onrender.com', // Frontend URL
+  origin: process.env.CROSS, // Frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
